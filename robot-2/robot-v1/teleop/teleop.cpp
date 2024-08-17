@@ -24,6 +24,7 @@ drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, 295,
 motor Conveyor = motor(PORT14, ratio18_1, true);
 motor Intake = motor(PORT2, ratio18_1, false);
 
+
 // Define variable for remote controller enable/disable
 bool RemoteControlCodeEnabled = true;
 bool StuckHelperCodeEnabled = true;
@@ -32,6 +33,8 @@ bool ControllerLeftShoulderControlMotorsStopped = true;
 bool ControllerRightShoulderControlMotorsStopped = true;
 bool DrivetrainLNeedsToBeStopped_Controller = true;
 bool DrivetrainRNeedsToBeStopped_Controller = true;
+// Piston Thing
+bool PistonState = false;
 
 
 void controlDrivetrain() {
@@ -54,6 +57,19 @@ void controlDrivetrain() {
 
   handleMotorControl(LeftDriveSmart, drivetrainLeftSideSpeed, DrivetrainLNeedsToBeStopped_Controller);
   handleMotorControl(RightDriveSmart, drivetrainRightSideSpeed, DrivetrainRNeedsToBeStopped_Controller);
+}
+
+void pistonLoop() {
+  while (true) {
+    if (Controller.ButtonA.pressing()) {
+      PistonState = !PistonState;
+      Piston.set(PistonState);
+      while (Controller.ButtonA.pressing()) {
+        wait(20, msec);
+      }
+    }
+    wait(20, msec);
+  }
 }
 
 void controlConveyor() {
@@ -149,4 +165,5 @@ int main() {
   task controllerTask(controllerLoop);
   task stuckHelperTask(stuckHelperLoop);
   task infoTask(infoLoop);
+  task pistonTask(pistonLoop);
 }
