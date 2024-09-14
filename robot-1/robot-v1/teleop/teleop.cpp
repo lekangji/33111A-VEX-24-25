@@ -7,12 +7,13 @@
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
-#include "vex.h"
+#include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <math.h>
 #include <string.h>
+
+#include "vex.h"
 
 using namespace vex;
 // using signature = vision::signature;
@@ -42,8 +43,8 @@ digital_out piston = digital_out(Brain.ThreeWirePort.A);
 
 // Define variables that enable/disable sections of code
 bool remoteControlCodeEnabled = true;
-bool stuckHelperCodeEnabled = false;
-bool infoCodeEnabled = false;
+bool stuckHelperCodeEnabled = true;
+bool infoCodeEnabled = true;
 
 // Define variables used for controlling motors
 bool conveyorMotorsStopped = true;
@@ -53,6 +54,7 @@ bool drivetrainRNeedsToBeStopped = true;
 
 // Robot components
 bool pistonState = false;
+
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -64,8 +66,7 @@ bool pistonState = false;
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
 
-void initalize(void)
-{
+void initalize(void) {
     // All activities that occur before the competition starts.
     Drivetrain.setDriveVelocity(100, percent);
     Drivetrain.setTurnVelocity(100, percent);
@@ -87,8 +88,7 @@ void initalize(void)
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
-void autonomous(void)
-{
+void autonomous(void) {
     // All the autonomous code
 }
 
@@ -102,24 +102,18 @@ void autonomous(void)
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
-void controlDrivetrain()
-{
+void controlDrivetrain() {
     // Function to handle drivetrain motor control
     int drivetrainLeftSideSpeed = Controller.Axis3.position();
     int drivetrainRightSideSpeed = Controller.Axis2.position();
 
-    auto handleMotorControl = [](motor_group &motorGroup, int speed, bool &motorNeedsToBeStopped)
-    {
-        if (abs(speed) < 5)
-        {
-            if (motorNeedsToBeStopped)
-            {
+    auto handleMotorControl = [](motor_group &motorGroup, int speed, bool &motorNeedsToBeStopped) {
+        if (abs(speed) < 5) {
+            if (motorNeedsToBeStopped) {
                 motorGroup.stop();
                 motorNeedsToBeStopped = false;
             }
-        }
-        else
-        {
+        } else {
             motorNeedsToBeStopped = true;
             motorGroup.setVelocity(speed, percent);
             motorGroup.spin(forward);
@@ -130,35 +124,27 @@ void controlDrivetrain()
     handleMotorControl(rightDriveSmart, drivetrainRightSideSpeed, drivetrainRNeedsToBeStopped);
 }
 
-void controlPiston()
-{
-    static bool lastButtonState = false; // Track the previous state of the button
+void controlPiston() {
+    static bool lastButtonState = false;  // Track the previous state of the button
     bool currentButtonState = Controller.ButtonA.pressing();
 
-    if (currentButtonState && !lastButtonState)
-    {                               // Detect button press
-        pistonState = !pistonState; // Toggle the piston state
+    if (currentButtonState && !lastButtonState) {  // Detect button press
+        pistonState = !pistonState;                // Toggle the piston state
         piston.set(pistonState);
     }
 
-    lastButtonState = currentButtonState; // Update the previous state
+    lastButtonState = currentButtonState;  // Update the previous state
 }
 
-void controlConveyor()
-{
+void controlConveyor() {
     // Function to handle conveyor control
-    if (Controller.ButtonL1.pressing())
-    {
+    if (Controller.ButtonL1.pressing()) {
         conveyor.spin(forward);
         conveyorMotorsStopped = false;
-    }
-    else if (Controller.ButtonL2.pressing())
-    {
+    } else if (Controller.ButtonL2.pressing()) {
         conveyor.spin(reverse);
         conveyorMotorsStopped = false;
-    }
-    else if (!conveyorMotorsStopped)
-    {
+    } else if (!conveyorMotorsStopped) {
         conveyor.stop();
         conveyorMotorsStopped = true;
     }
@@ -178,27 +164,25 @@ void controlConveyor()
     }
 }*/
 
-int stuckHelperLoop()
-{
-    if (!stuckHelperCodeEnabled)
-    {
+int stuckHelperLoop() {
+    if (!stuckHelperCodeEnabled) {
         return 0;
     }
 
-    while (true)
-    {
+    while (true) {
+        if (conveyor.velocity(rpm) < 20 && conveyor.current() > 5) {
+            Controller.rumble(".");
+        }
+
         // if too high current and too low velocity, stop
         wait(20, msec);
     }
 }
 
-int controllerLoop()
-{
+int controllerLoop() {
     // Handle controller input
-    while (true)
-    {
-        if (remoteControlCodeEnabled)
-        {
+    while (true) {
+        if (remoteControlCodeEnabled) {
             controlDrivetrain();
             controlConveyor();
             controlPiston();
@@ -207,16 +191,13 @@ int controllerLoop()
     }
 }
 
-int infoLoop()
-{
-    if (!infoCodeEnabled)
-    {
+int infoLoop() {
+    if (!infoCodeEnabled) {
         return 0;
     }
 
     // Prints info on brain & controller
-    while (true)
-    {
+    while (true) {
         Brain.Screen.clearScreen();
         Brain.Screen.setCursor(1, 1);
 
@@ -228,18 +209,16 @@ int infoLoop()
             static_cast<double>(Drivetrain.torque())};
 
         // Iterate over the array and print each value
-        for (double info : infoToPrint)
-        {
+        for (double info : infoToPrint) {
             Brain.Screen.print(info);
             Brain.Screen.newLine();
         }
 
-        wait(200, msec); // Give some delay
+        wait(200, msec);  // Give some delay
     }
 }
 
-void userControl(void)
-{
+void userControl(void) {
     Controller.rumble(". . . -");
 
     task controllerTask(controllerLoop);
@@ -248,8 +227,7 @@ void userControl(void)
 }
 
 // Set up callbacks and stuff
-int main()
-{
+int main() {
     // Set up callbacks for autonomous and driver control periods.
     Competition.autonomous(autonomous);
     Competition.drivercontrol(userControl);
@@ -258,8 +236,7 @@ int main()
     initalize();
 
     // Prevent main from exiting with an infinite loop.
-    while (true)
-    {
+    while (true) {
         wait(1000, msec);
     }
 }
