@@ -1,9 +1,18 @@
+/*----------------------------------------------------------------------------*/
+/*                                                                            */
+/*    Module:       main.cpp                                                  */
+/*    Author:       lekan                                                     */
+/*    Created:      9/14/2024, 2:10:26 PM                                     */
+/*    Description:  V5 project                                                */
+/*                                                                            */
+/*----------------------------------------------------------------------------*/
+
+#include "vex.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
 #include <string.h>
-#include "vex.h"
 
 using namespace vex;
 using signature = vision::signature;
@@ -12,7 +21,10 @@ using code = vision::code;
 // A global instance of brain used for printing to the V5 Brain screen
 brain Brain;
 
-// VEXcode device constructors
+// A global instance of competition
+competition Competition;
+
+// Define all needed devices:
 controller Controller = controller(primary);
 motor leftMotorA = motor(PORT10, ratio18_1, true);
 motor leftMotorB = motor(PORT11, ratio18_1, true);
@@ -33,137 +45,173 @@ bool ControllerLeftShoulderControlMotorsStopped = true;
 bool ControllerRightShoulderControlMotorsStopped = true;
 bool DrivetrainLNeedsToBeStopped_Controller = true;
 bool DrivetrainRNeedsToBeStopped_Controller = true;
-// Piston Thing
+// Piston
 bool PistonState = false;
+
+/*---------------------------------------------------------------------------*/
+/*                          Pre-Autonomous Functions                         */
+/*                                                                           */
+/*  You may want to perform some actions before the competition starts.      */
+/*  Do them in the following function.  You must return from this function   */
+/*  or the autonomous and usercontrol tasks will not be started.  This       */
+/*  function is only called once after the V5 has been powered on and        */
+/*  not every time that the robot is disabled.                               */
+/*---------------------------------------------------------------------------*/
+
+void initalize(void) {
+    // All activities that occur before the competition starts.
+}
+
+/*---------------------------------------------------------------------------*/
+/*                                                                           */
+/*                              Autonomous Task                              */
+/*                                                                           */
+/*  This task is used to control your robot during the autonomous phase of   */
+/*  a VEX Competition.                                                       */
+/*                                                                           */
+/*  You must modify the code to add your own robot specific commands here.   */
+/*---------------------------------------------------------------------------*/
+
+void autonomous(void) {
+    // All the autonomous code
+}
+
+
+/*---------------------------------------------------------------------------*/
+/*                                                                           */
+/*                              User Control Task                            */
+/*                                                                           */
+/*  This task is used to control your robot during the user control phase of */
+/*  a VEX Competition.                                                       */
+/*                                                                           */
+/*  You must modify the code to add your own robot specific commands here.   */
+/*---------------------------------------------------------------------------*/
 
 
 void controlDrivetrain() {
-  // Function to handle drivetrain motor control
-  int drivetrainLeftSideSpeed = Controller.Axis3.position();
-  int drivetrainRightSideSpeed = Controller.Axis2.position();
+    // Function to handle drivetrain motor control
+    int drivetrainLeftSideSpeed = Controller.Axis3.position();
+    int drivetrainRightSideSpeed = Controller.Axis2.position();
 
-  auto handleMotorControl = [](motor_group &motorGroup, int speed, bool &motorNeedsToBeStopped) {
-    if (abs(speed) < 5) {
-      if (motorNeedsToBeStopped) {
-        motorGroup.stop();
-        motorNeedsToBeStopped = false;
-      }
-    } else {
-      motorNeedsToBeStopped = true;
-      motorGroup.setVelocity(speed, percent);
-      motorGroup.spin(forward);
-    }
-  };
+    auto handleMotorControl = [](motor_group & motorGroup, int speed, bool & motorNeedsToBeStopped) {
+        if (abs(speed) < 5) {
+            if (motorNeedsToBeStopped) {
+                motorGroup.stop();
+                motorNeedsToBeStopped = false;
+            }
+        } else {
+            motorNeedsToBeStopped = true;
+            motorGroup.setVelocity(speed, percent);
+            motorGroup.spin(forward);
+        }
+    };
 
-  handleMotorControl(LeftDriveSmart, drivetrainLeftSideSpeed, DrivetrainLNeedsToBeStopped_Controller);
-  handleMotorControl(RightDriveSmart, drivetrainRightSideSpeed, DrivetrainRNeedsToBeStopped_Controller);
+    handleMotorControl(LeftDriveSmart, drivetrainLeftSideSpeed, DrivetrainLNeedsToBeStopped_Controller);
+    handleMotorControl(RightDriveSmart, drivetrainRightSideSpeed, DrivetrainRNeedsToBeStopped_Controller);
 }
 
 void pistonLoop() {
-  while (true) {
-    if (Controller.ButtonA.pressing()) {
-      PistonState = !PistonState;
-      Piston.set(PistonState);
-      while (Controller.ButtonA.pressing()) {
+    while (true) {
+        if (Controller.ButtonA.pressing()) {
+            PistonState = !PistonState;
+            Piston.set(PistonState);
+            while (Controller.ButtonA.pressing()) {
+                wait(20, msec);
+            }
+        }
         wait(20, msec);
-      }
     }
-    wait(20, msec);
-  }
 }
 
 void controlConveyor() {
-  // Function to handle conveyor control
-  if (Controller.ButtonL1.pressing()) {
-    Conveyor.spin(forward);
-    ControllerLeftShoulderControlMotorsStopped = false;
-  } else if (Controller.ButtonL2.pressing()) {
-    Conveyor.spin(reverse);
-    ControllerLeftShoulderControlMotorsStopped = false;
-  } else if (!ControllerLeftShoulderControlMotorsStopped) {
-    Conveyor.stop();
-    ControllerLeftShoulderControlMotorsStopped = true;
-  }
+    // Function to handle conveyor control
+    if (Controller.ButtonL1.pressing()) {
+        Conveyor.spin(forward);
+        ControllerLeftShoulderControlMotorsStopped = false;
+    } else if (Controller.ButtonL2.pressing()) {
+        Conveyor.spin(reverse);
+        ControllerLeftShoulderControlMotorsStopped = false;
+    } else if (!ControllerLeftShoulderControlMotorsStopped) {
+        Conveyor.stop();
+        ControllerLeftShoulderControlMotorsStopped = true;
+    }
 }
 
 void controlIntake() {
-  // Function to handle intake control
-  if (Controller.ButtonR1.pressing()) {
-    Intake.spin(forward);
-    ControllerRightShoulderControlMotorsStopped = false;
-  } else if (Controller.ButtonR2.pressing()) {
-    Intake.spin(reverse);
-    ControllerRightShoulderControlMotorsStopped = false;
-  } else if (!ControllerRightShoulderControlMotorsStopped) {
-    Intake.stop();
-    ControllerRightShoulderControlMotorsStopped = true;
-  }
-}
-
-int controllerLoop() {
-  // Handle inputs from controller
-  while (true) {
-    if (RemoteControlCodeEnabled) {
-      controlDrivetrain();
-      controlConveyor();
-      controlIntake();
+    // Function to handle intake control
+    if (Controller.ButtonR1.pressing()) {
+        Intake.spin(forward);
+        ControllerRightShoulderControlMotorsStopped = false;
+    } else if (Controller.ButtonR2.pressing()) {
+        Intake.spin(reverse);
+        ControllerRightShoulderControlMotorsStopped = false;
+    } else if (!ControllerRightShoulderControlMotorsStopped) {
+        Intake.stop();
+        ControllerRightShoulderControlMotorsStopped = true;
     }
-    wait(20, msec);
-  }
-  return 0;
 }
 
 int stuckHelperLoop() {
-  while (true) {
-    if (StuckHelperCodeEnabled) {
-      
+    if (!StuckHelperCodeEnabled) {
+        return;
     }
-    wait(20, msec);
-  }
-  return 0;
+
+    while (true) {
+        // if too high current and too low velocity, stop
+        wait(20, msec);
+    }
+    return 0;
 }
 
 int infoLoop() {
-  // Prints info on brain & controller
-  while (true) {
-    Brain.Screen.clearScreen();
-    Brain.Screen.setCursor(1, 1);
-    
-    double infoToPrint[] = {
-      static_cast<double>(Brain.Battery.capacity()),
-      static_cast<double>(Brain.Battery.current()),
-      static_cast<double>(Brain.Battery.temperature()),
-      static_cast<double>(Drivetrain.efficiency()),
-      static_cast<double>(Drivetrain.torque())
-    };
+    // Prints info on brain & controller
+    while (true) {
+        Brain.Screen.clearScreen();
+        Brain.Screen.setCursor(1, 1);
 
-    // Iterate over the array and print each value
-    for (double info : infoToPrint) {
-        Brain.Screen.print(info);
-        Brain.Screen.newLine();
+        double infoToPrint[] = {
+            static_cast<double>(Brain.Battery.capacity()),
+            static_cast<double>(Brain.Battery.current()),
+            static_cast<double>(Brain.Battery.temperature()),
+            static_cast<double>(Drivetrain.efficiency()),
+            static_cast<double>(Drivetrain.torque())
+        };
+
+        // Iterate over the array and print each value
+        for (double info: infoToPrint) {
+            Brain.Screen.print(info);
+            Brain.Screen.newLine();
+        }
+
+        wait(200, msec); // Give some delay
     }
-
-    wait(200, msec);  // Give some delay
-  }
-  return 0;
+    return 0;
 }
 
+
+void userControl(void) {
+    // Handle controller input
+    while (true) {
+        if (RemoteControlCodeEnabled) {
+            controlDrivetrain();
+            controlConveyor();
+            controlIntake();
+        }
+        wait(20, msec);
+    }
+}
+
+// Set up callbacks and stuff
 int main() {
-  Drivetrain.setDriveVelocity(100, percent);
-  Drivetrain.setTurnVelocity(100, percent);
-  Drivetrain.setStopping(coast);
-  Conveyor.setVelocity(100, percent);
-  Conveyor.setMaxTorque(100, percent);
-  Conveyor.setStopping(coast);
-  Intake.setVelocity(100, percent);
-  Intake.setMaxTorque(100, percent);
-  Intake.setStopping(coast);
+    // Set up callbacks for autonomous and driver control periods.
+    Competition.autonomous(autonomous);
+    Competition.drivercontrol(userControl);
 
-  Brain.Screen.setFont(mono30);
+    // Run the pre-autonomous function.
+    initalize();
 
-  Controller.rumble(". . . -");
-  task controllerTask(controllerLoop);
-  task stuckHelperTask(stuckHelperLoop);
-  task infoTask(infoLoop);
-  task pistonTask(pistonLoop);
+    // Prevent main from exiting with an infinite loop.
+    while (true) {
+        wait(1000, msec);
+    }
 }
