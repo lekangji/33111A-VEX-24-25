@@ -3,12 +3,12 @@
 ### Code for cool robots
 
 > [!IMPORTANT]  
-> ONLY COOL ROBOTS
+> ONLY COOL ROBOTS 😃
 
 ## Authors:
 
-1. ==**22yeets22**==
-2. ~~other guy~~
+1. 22yeets22
+2. average-us
 
 ## Robot 1
 
