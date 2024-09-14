@@ -26,26 +26,32 @@ competition Competition;
 
 // Define all needed devices:
 controller Controller = controller(primary);
-motor leftMotorA = motor(PORT10, ratio18_1, true);
-motor leftMotorB = motor(PORT11, ratio18_1, true);
+motor leftMotorA = motor(PORT1, ratio18_1, true);
+motor leftMotorB = motor(PORT2, ratio18_1, true);
 motor_group LeftDriveSmart = motor_group(leftMotorA, leftMotorB);
-motor rightMotorA = motor(PORT1, ratio18_1, false);
-motor rightMotorB = motor(PORT20, ratio18_1, false);
+motor rightMotorA = motor(PORT3, ratio18_1, false);
+motor rightMotorB = motor(PORT4, ratio18_1, false);
 motor_group RightDriveSmart = motor_group(rightMotorA, rightMotorB);
 drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, 295, 40, mm, 1);
-motor Conveyor = motor(PORT14, ratio18_1, true);
-motor Intake = motor(PORT2, ratio18_1, false);
+
+motor ConveyorA = motor(PORT5, ratio18_1, true);
+motor ConveyorB = motor(PORT6, ratio18_1, false);
+motor_group Conveyor = motor_group(ConveyorA, ConveyorB);
+
 digital_out Piston = digital_out(Brain.ThreeWirePort.A);
 
 // Define variable for remote controller enable/disable
 bool RemoteControlCodeEnabled = true;
 bool StuckHelperCodeEnabled = true;
+bool infoCodeEnabled = false;
+
 // Define variables used for controlling motors based on controller inputs
 bool ControllerLeftShoulderControlMotorsStopped = true;
 bool ControllerRightShoulderControlMotorsStopped = true;
 bool DrivetrainLNeedsToBeStopped_Controller = true;
 bool DrivetrainRNeedsToBeStopped_Controller = true;
-// Piston
+
+// Robot components
 bool PistonState = false;
 
 /*---------------------------------------------------------------------------*/
@@ -66,9 +72,6 @@ void initalize(void) {
     Conveyor.setVelocity(100, percent);
     Conveyor.setMaxTorque(100, percent);
     Conveyor.setStopping(coast);
-    Intake.setVelocity(100, percent);
-    Intake.setMaxTorque(100, percent);
-    Intake.setStopping(coast);
 
     Brain.Screen.setFont(mono30);
 }
@@ -147,7 +150,7 @@ void controlConveyor() {
     }
 }
 
-void controlIntake() {
+/*void controlIntake() {
     // Function to handle intake control
     if (Controller.ButtonR1.pressing()) {
         Intake.spin(forward);
@@ -159,11 +162,11 @@ void controlIntake() {
         Intake.stop();
         ControllerRightShoulderControlMotorsStopped = true;
     }
-}
+}*/
 
 int stuckHelperLoop() {
     if (!StuckHelperCodeEnabled) {
-        return;
+        return 0;
     }
 
     while (true) {
@@ -179,7 +182,6 @@ int controllerLoop() {
         if (RemoteControlCodeEnabled) {
             controlDrivetrain();
             controlConveyor();
-            controlIntake();
             controlPiston();
         }
         wait(20, msec);
@@ -187,6 +189,10 @@ int controllerLoop() {
 }
 
 int infoLoop() {
+    if (!infoCodeEnabled) {
+        return 0;
+    }
+
     // Prints info on brain & controller
     while (true) {
         Brain.Screen.clearScreen();
