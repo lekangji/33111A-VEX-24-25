@@ -2,7 +2,7 @@
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
 /*    Author:       lekan                                                     */
-/*    Created:      9/14/2024, 2:10:26 PM                                     */
+/*    Created:      9/14/2024, 2:50:26 PM                                     */
 /*    Description:  V5 project                                                */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
@@ -28,56 +28,76 @@ competition Competition;
 controller Controller = controller(primary);
 motor leftMotorA = motor(PORT10, ratio18_1, true);
 motor leftMotorB = motor(PORT11, ratio18_1, true);
-motor_group leftDriveSmart = motor_group(leftMotorA, leftMotorB);
+motor_group LeftDriveSmart = motor_group(leftMotorA, leftMotorB);
 motor rightMotorA = motor(PORT1, ratio18_1, false);
 motor rightMotorB = motor(PORT20, ratio18_1, false);
-motor_group rightDriveSmart = motor_group(rightMotorA, rightMotorB);
-drivetrain Drivetrain = drivetrain(leftDriveSmart, rightDriveSmart, 319.19, 295, 40, mm, 1);
-motor conveyor = motor(PORT14, ratio18_1, true);
-motor intake = motor(PORT2, ratio18_1, false);
-digital_out piston = digital_out(Brain.ThreeWirePort.A);
+motor_group RightDriveSmart = motor_group(rightMotorA, rightMotorB);
+drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, 295, 40, mm, 1);
+motor Conveyor = motor(PORT14, ratio18_1, true);
+motor Intake = motor(PORT2, ratio18_1, false);
+digital_out Piston = digital_out(Brain.ThreeWirePort.A);
 
 // Define variable for remote controller enable/disable
-bool remoteControlCodeEnabled = true;
-bool stuckHelperCodeEnabled = true;
+bool RemoteControlCodeEnabled = true;
+bool StuckHelperCodeEnabled = true;
 // Define variables used for controlling motors based on controller inputs
-bool controllerLeftShoulderControlMotorsStopped = true;
-bool controllerRightShoulderControlMotorsStopped = true;
-bool drivetrainLNeedsToBeStoppedController = true;
-bool drivetrainRNeedsToBeStoppedController = true;
+bool ControllerLeftShoulderControlMotorsStopped = true;
+bool ControllerRightShoulderControlMotorsStopped = true;
+bool DrivetrainLNeedsToBeStopped_Controller = true;
+bool DrivetrainRNeedsToBeStopped_Controller = true;
 // Piston
-bool pistonState = false;
+bool PistonState = false;
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
+/*                                                                           */
+/*  You may want to perform some actions before the competition starts.      */
+/*  Do them in the following function.  You must return from this function   */
+/*  or the autonomous and usercontrol tasks will not be started.  This       */
+/*  function is only called once after the V5 has been powered on and        */
+/*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
 
-void initialize() {
+void initalize(void) {
     // All activities that occur before the competition starts.
     Drivetrain.setDriveVelocity(100, percent);
     Drivetrain.setTurnVelocity(100, percent);
     Drivetrain.setStopping(coast);
-    conveyor.setVelocity(100, percent);
-    conveyor.setMaxTorque(100, percent);
-    conveyor.setStopping(coast);
-    intake.setVelocity(100, percent);
-    intake.setMaxTorque(100, percent);
-    intake.setStopping(coast);
+    Conveyor.setVelocity(100, percent);
+    Conveyor.setMaxTorque(100, percent);
+    Conveyor.setStopping(coast);
+    Intake.setVelocity(100, percent);
+    Intake.setMaxTorque(100, percent);
+    Intake.setStopping(coast);
 
     Brain.Screen.setFont(mono30);
 }
 
 /*---------------------------------------------------------------------------*/
+/*                                                                           */
 /*                              Autonomous Task                              */
+/*                                                                           */
+/*  This task is used to control your robot during the autonomous phase of   */
+/*  a VEX Competition.                                                       */
+/*                                                                           */
+/*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
-void autonomous() {
+void autonomous(void) {
     // All the autonomous code
 }
 
+
 /*---------------------------------------------------------------------------*/
+/*                                                                           */
 /*                              User Control Task                            */
+/*                                                                           */
+/*  This task is used to control your robot during the user control phase of */
+/*  a VEX Competition.                                                       */
+/*                                                                           */
+/*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
+
 
 void controlDrivetrain() {
     // Function to handle drivetrain motor control
@@ -97,54 +117,53 @@ void controlDrivetrain() {
         }
     };
 
-    handleMotorControl(leftDriveSmart, drivetrainLeftSideSpeed, drivetrainLNeedsToBeStoppedController);
-    handleMotorControl(rightDriveSmart, drivetrainRightSideSpeed, drivetrainRNeedsToBeStoppedController);
+    handleMotorControl(LeftDriveSmart, drivetrainLeftSideSpeed, DrivetrainLNeedsToBeStopped_Controller);
+    handleMotorControl(RightDriveSmart, drivetrainRightSideSpeed, DrivetrainRNeedsToBeStopped_Controller);
 }
 
 void controlPiston() {
-    static bool lastButtonState = false; // Track the previous state of the button
-
+    static bool lastButtonState = false;  // Track the previous state of the button
     bool currentButtonState = Controller.ButtonA.pressing();
 
-    if (currentButtonState && !lastButtonState) { // Detect button press
-        pistonState = !pistonState; // Toggle the piston state
-        piston.set(pistonState);
+    if (currentButtonState && !lastButtonState) {  // Detect button press
+        PistonState = !PistonState;  // Toggle the piston state
+        Piston.set(PistonState);
     }
 
-    lastButtonState = currentButtonState; // Update the previous state
+    lastButtonState = currentButtonState;  // Update the previous state
 }
 
 void controlConveyor() {
     // Function to handle conveyor control
     if (Controller.ButtonL1.pressing()) {
-        conveyor.spin(forward);
-        controllerLeftShoulderControlMotorsStopped = false;
+        Conveyor.spin(forward);
+        ControllerLeftShoulderControlMotorsStopped = false;
     } else if (Controller.ButtonL2.pressing()) {
-        conveyor.spin(reverse);
-        controllerLeftShoulderControlMotorsStopped = false;
-    } else if (!controllerLeftShoulderControlMotorsStopped) {
-        conveyor.stop();
-        controllerLeftShoulderControlMotorsStopped = true;
+        Conveyor.spin(reverse);
+        ControllerLeftShoulderControlMotorsStopped = false;
+    } else if (!ControllerLeftShoulderControlMotorsStopped) {
+        Conveyor.stop();
+        ControllerLeftShoulderControlMotorsStopped = true;
     }
 }
 
 void controlIntake() {
     // Function to handle intake control
     if (Controller.ButtonR1.pressing()) {
-        intake.spin(forward);
-        controllerRightShoulderControlMotorsStopped = false;
+        Intake.spin(forward);
+        ControllerRightShoulderControlMotorsStopped = false;
     } else if (Controller.ButtonR2.pressing()) {
-        intake.spin(reverse);
-        controllerRightShoulderControlMotorsStopped = false;
-    } else if (!controllerRightShoulderControlMotorsStopped) {
-        intake.stop();
-        controllerRightShoulderControlMotorsStopped = true;
+        Intake.spin(reverse);
+        ControllerRightShoulderControlMotorsStopped = false;
+    } else if (!ControllerRightShoulderControlMotorsStopped) {
+        Intake.stop();
+        ControllerRightShoulderControlMotorsStopped = true;
     }
 }
 
 int stuckHelperLoop() {
-    if (!stuckHelperCodeEnabled) {
-        return 0;
+    if (!StuckHelperCodeEnabled) {
+        return;
     }
 
     while (true) {
@@ -157,7 +176,7 @@ int stuckHelperLoop() {
 int controllerLoop() {
     // Handle controller input
     while (true) {
-        if (remoteControlCodeEnabled) {
+        if (RemoteControlCodeEnabled) {
             controlDrivetrain();
             controlConveyor();
             controlIntake();
@@ -182,7 +201,7 @@ int infoLoop() {
         };
 
         // Iterate over the array and print each value
-        for (double info : infoToPrint) {
+        for (double info: infoToPrint) {
             Brain.Screen.print(info);
             Brain.Screen.newLine();
         }
@@ -192,7 +211,8 @@ int infoLoop() {
     return 0;
 }
 
-void userControl() {
+
+void userControl(void) {
     Controller.rumble(". . . -");
 
     task controllerTask(controllerLoop);
@@ -207,12 +227,10 @@ int main() {
     Competition.drivercontrol(userControl);
 
     // Run the pre-autonomous function.
-    initialize();
+    initalize();
 
     // Prevent main from exiting with an infinite loop.
     while (true) {
         wait(1000, msec);
     }
-
-    return 0;  // Prevents compiler warnings
 }
