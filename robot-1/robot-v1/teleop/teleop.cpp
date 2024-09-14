@@ -15,8 +15,10 @@
 #include <string.h>
 
 using namespace vex;
-using signature = vision::signature;
-using code = vision::code;
+using vexController = drivetrain;
+using vexDrivetrain = drivetrain;
+// using signature = vision::signature;
+// using code = vision::code;
 
 // A global instance of brain used for printing to the V5 Brain screen
 brain Brain;
@@ -25,34 +27,34 @@ brain Brain;
 competition Competition;
 
 // Define all needed devices:
-controller Controller = controller(primary);
+vexController controller = vexController(primary);
 motor leftMotorA = motor(PORT1, ratio18_1, true);
 motor leftMotorB = motor(PORT2, ratio18_1, true);
-motor_group LeftDriveSmart = motor_group(leftMotorA, leftMotorB);
+motor_group leftDriveSmart = motor_group(leftMotorA, leftMotorB);
 motor rightMotorA = motor(PORT3, ratio18_1, false);
 motor rightMotorB = motor(PORT4, ratio18_1, false);
-motor_group RightDriveSmart = motor_group(rightMotorA, rightMotorB);
-drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, 295, 40, mm, 1);
+motor_group rightDriveSmart = motor_group(rightMotorA, rightMotorB);
+vexDrivetrain drivetrain = vexDrivetrain(leftDriveSmart, rightDriveSmart, 319.19, 295, 40, mm, 1);
 
-motor ConveyorA = motor(PORT5, ratio18_1, true);
-motor ConveyorB = motor(PORT6, ratio18_1, false);
-motor_group Conveyor = motor_group(ConveyorA, ConveyorB);
+motor conveyorA = motor(PORT5, ratio18_1, true);
+motor conveyorB = motor(PORT6, ratio18_1, false);
+motor_group conveyor = motor_group(conveyorA, conveyorB);
 
-digital_out Piston = digital_out(Brain.ThreeWirePort.A);
+digital_out piston = digital_out(Brain.ThreeWirePort.A);
 
-// Define variable for remote controller enable/disable
-bool RemoteControlCodeEnabled = true;
-bool StuckHelperCodeEnabled = true;
+// Define variables that enable/disable sections of code
+bool remoteControlCodeEnabled = true;
+bool stuckHelperCodeEnabled = false;
 bool infoCodeEnabled = false;
 
-// Define variables used for controlling motors based on controller inputs
-bool ControllerLeftShoulderControlMotorsStopped = true;
-bool ControllerRightShoulderControlMotorsStopped = true;
-bool DrivetrainLNeedsToBeStopped_Controller = true;
-bool DrivetrainRNeedsToBeStopped_Controller = true;
+// Define variables used for controlling motors
+bool conveyorMotorsStopped = true;
+// bool intakeMotorsStopped = true;
+bool drivetrainLNeedsToBeStopped = true;
+bool drivetrainRNeedsToBeStopped = true;
 
 // Robot components
-bool PistonState = false;
+bool pistonState = false;
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
@@ -66,12 +68,12 @@ bool PistonState = false;
 
 void initalize(void) {
     // All activities that occur before the competition starts.
-    Drivetrain.setDriveVelocity(100, percent);
-    Drivetrain.setTurnVelocity(100, percent);
-    Drivetrain.setStopping(coast);
-    Conveyor.setVelocity(100, percent);
-    Conveyor.setMaxTorque(100, percent);
-    Conveyor.setStopping(coast);
+    drivetrain.setDriveVelocity(100, percent);
+    drivetrain.setTurnVelocity(100, percent);
+    drivetrain.setStopping(coast);
+    conveyor.setVelocity(100, percent);
+    conveyor.setMaxTorque(100, percent);
+    conveyor.setStopping(coast);
 
     Brain.Screen.setFont(mono30);
 }
@@ -104,8 +106,8 @@ void autonomous(void) {
 
 void controlDrivetrain() {
     // Function to handle drivetrain motor control
-    int drivetrainLeftSideSpeed = Controller.Axis3.position();
-    int drivetrainRightSideSpeed = Controller.Axis2.position();
+    int drivetrainLeftSideSpeed = controller.Axis3.position();
+    int drivetrainRightSideSpeed = controller.Axis2.position();
 
     auto handleMotorControl = [](motor_group & motorGroup, int speed, bool & motorNeedsToBeStopped) {
         if (abs(speed) < 5) {
@@ -120,17 +122,17 @@ void controlDrivetrain() {
         }
     };
 
-    handleMotorControl(LeftDriveSmart, drivetrainLeftSideSpeed, DrivetrainLNeedsToBeStopped_Controller);
-    handleMotorControl(RightDriveSmart, drivetrainRightSideSpeed, DrivetrainRNeedsToBeStopped_Controller);
+    handleMotorControl(leftDriveSmart, drivetrainLeftSideSpeed, drivetrainLNeedsToBeStopped);
+    handleMotorControl(rightDriveSmart, drivetrainRightSideSpeed, drivetrainRNeedsToBeStopped);
 }
 
 void controlPiston() {
     static bool lastButtonState = false;  // Track the previous state of the button
-    bool currentButtonState = Controller.ButtonA.pressing();
+    bool currentButtonState = controller.ButtonA.pressing();
 
     if (currentButtonState && !lastButtonState) {  // Detect button press
-        PistonState = !PistonState;  // Toggle the piston state
-        Piston.set(PistonState);
+        pistonState = !pistonState;  // Toggle the piston state
+        piston.set(pistonState);
     }
 
     lastButtonState = currentButtonState;  // Update the previous state
@@ -138,48 +140,47 @@ void controlPiston() {
 
 void controlConveyor() {
     // Function to handle conveyor control
-    if (Controller.ButtonL1.pressing()) {
-        Conveyor.spin(forward);
-        ControllerLeftShoulderControlMotorsStopped = false;
-    } else if (Controller.ButtonL2.pressing()) {
-        Conveyor.spin(reverse);
-        ControllerLeftShoulderControlMotorsStopped = false;
-    } else if (!ControllerLeftShoulderControlMotorsStopped) {
-        Conveyor.stop();
-        ControllerLeftShoulderControlMotorsStopped = true;
+    if (controller.ButtonL1.pressing()) {
+        conveyor.spin(forward);
+        conveyorMotorsStopped = false;
+    } else if (controller.ButtonL2.pressing()) {
+        conveyor.spin(reverse);
+        conveyorMotorsStopped = false;
+    } else if (!conveyorMotorsStopped) {
+        conveyor.stop();
+        conveyorMotorsStopped = true;
     }
 }
 
 /*void controlIntake() {
     // Function to handle intake control
-    if (Controller.ButtonR1.pressing()) {
+    if (controller.ButtonR1.pressing()) {
         Intake.spin(forward);
-        ControllerRightShoulderControlMotorsStopped = false;
-    } else if (Controller.ButtonR2.pressing()) {
+        intakeMotorsStopped = false;
+    } else if (controller.ButtonR2.pressing()) {
         Intake.spin(reverse);
-        ControllerRightShoulderControlMotorsStopped = false;
-    } else if (!ControllerRightShoulderControlMotorsStopped) {
+        intakeMotorsStopped = false;
+    } else if (!intakeMotorsStopped) {
         Intake.stop();
-        ControllerRightShoulderControlMotorsStopped = true;
+        intakeMotorsStopped = true;
     }
 }*/
 
-int stuckHelperLoop() {
-    if (!StuckHelperCodeEnabled) {
-        return 0;
+void stuckHelperLoop() {
+    if (!stuckHelperCodeEnabled) {
+        return;
     }
 
     while (true) {
         // if too high current and too low velocity, stop
         wait(20, msec);
     }
-    return 0;
 }
 
-int controllerLoop() {
+void controllerLoop() {
     // Handle controller input
     while (true) {
-        if (RemoteControlCodeEnabled) {
+        if (remoteControlCodeEnabled) {
             controlDrivetrain();
             controlConveyor();
             controlPiston();
@@ -188,9 +189,9 @@ int controllerLoop() {
     }
 }
 
-int infoLoop() {
+void infoLoop() {
     if (!infoCodeEnabled) {
-        return 0;
+        return;
     }
 
     // Prints info on brain & controller
@@ -202,8 +203,8 @@ int infoLoop() {
             static_cast<double>(Brain.Battery.capacity()),
             static_cast<double>(Brain.Battery.current()),
             static_cast<double>(Brain.Battery.temperature()),
-            static_cast<double>(Drivetrain.efficiency()),
-            static_cast<double>(Drivetrain.torque())
+            static_cast<double>(drivetrain.efficiency()),
+            static_cast<double>(drivetrain.torque())
         };
 
         // Iterate over the array and print each value
@@ -214,12 +215,11 @@ int infoLoop() {
 
         wait(200, msec); // Give some delay
     }
-    return 0;
 }
 
 
 void userControl(void) {
-    Controller.rumble(". . . -");
+    controller.rumble(". . . -");
 
     task controllerTask(controllerLoop);
     task stuckHelperTask(stuckHelperLoop);
