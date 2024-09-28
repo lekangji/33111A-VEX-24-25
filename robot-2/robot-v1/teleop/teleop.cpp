@@ -167,7 +167,7 @@ void controlIntake() {
 
 int stuckHelperLoop() {
     if (!stuckHelperCodeEnabled) {
-        return;
+        return 0;
     }
 
     while (true) {
@@ -193,7 +193,7 @@ int controllerLoop() {
 
 int infoLoop() {
     if (!infoCodeEnabled) {
-        return;
+        return 0;
     }
 
     // Prints info on brain & controller
