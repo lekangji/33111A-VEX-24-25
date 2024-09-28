@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "vex.h"
 
 using namespace vex;
@@ -25,7 +24,7 @@ brain Brain;
 // A global instance of competition
 competition Competition;
 
-// Define all needed devices:
+// Define all needed devices
 controller Controller = controller(primary);
 motor leftMotorA = motor(PORT1, ratio18_1, true);
 motor leftMotorB = motor(PORT2, ratio18_1, true);
@@ -66,8 +65,12 @@ bool pistonState = false;
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
 
+/**
+ * Initializes the robot's systems before the competition starts.
+ *
+ * @return None
+ */
 void initalize(void) {
-    // All activities that occur before the competition starts.
     Drivetrain.setDriveVelocity(100, percent);
     Drivetrain.setTurnVelocity(100, percent);
     Drivetrain.setStopping(coast);
@@ -88,6 +91,11 @@ void initalize(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
+/**
+ * This function is used to control the robot during the autonomous phase of a VEX Competition.
+ *
+ * @return None
+ */
 void autonomous(void) {
     // All the autonomous code
 }
@@ -164,6 +172,12 @@ void controlConveyor() {
     }
 }*/
 
+/**
+ * Continuously checks the conveyor's velocity and current, 
+ * and triggers the controller to rumble if the conveyor is stuck.
+ *
+ * @return 0 if stuckHelperCodeEnabled is false
+ */
 int stuckHelperLoop() {
     if (!stuckHelperCodeEnabled) {
         return 0;
@@ -179,6 +193,11 @@ int stuckHelperLoop() {
     }
 }
 
+/**
+ * Continuously handles controller input and updates the robot's systems accordingly.
+ *
+ * @return None
+ */
 int controllerLoop() {
     // Handle controller input
     while (true) {
@@ -191,6 +210,11 @@ int controllerLoop() {
     }
 }
 
+/**
+ * Continuously prints information about the robot's brain and drivetrain to the screen.
+ *
+ * @return 0 if infoCodeEnabled is false
+ */
 int infoLoop() {
     if (!infoCodeEnabled) {
         return 0;
@@ -218,6 +242,11 @@ int infoLoop() {
     }
 }
 
+/**
+ * Handles all user control of the robot during the driver control phase of a VEX Competition.
+ *
+ * @return None
+ */
 void userControl(void) {
     Controller.rumble(". . . -");
 
@@ -226,7 +255,6 @@ void userControl(void) {
     task infoTask(infoLoop);
 }
 
-// Set up callbacks and stuff
 int main() {
     // Set up callbacks for autonomous and driver control periods.
     Competition.autonomous(autonomous);
