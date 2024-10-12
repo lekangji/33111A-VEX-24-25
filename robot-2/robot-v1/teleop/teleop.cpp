@@ -27,16 +27,16 @@ competition Competition;
 
 // Define all needed devices:
 controller Controller = controller(primary);
-motor leftMotorA = motor(PORT19, ratio18_1, true);
-motor leftMotorB = motor(PORT18, ratio18_1, true);
+motor leftMotorA = motor(PORT1, ratio18_1, true);
+motor leftMotorB = motor(PORT2, ratio18_1, true);
 motor_group leftDriveSmart = motor_group(leftMotorA, leftMotorB);
-motor rightMotorA = motor(PORT12, ratio18_1, false);
+motor rightMotorA = motor(PORT9, ratio18_1, false);
 motor rightMotorB = motor(PORT10, ratio18_1, false);
 motor_group rightDriveSmart = motor_group(rightMotorA, rightMotorB);
 drivetrain Drivetrain = drivetrain(leftDriveSmart, rightDriveSmart, 319.19, 295, 40, mm, 1);
 
-motor conveyor = motor(PORT11, ratio18_1, true);
-motor intake = motor(PORT20, ratio18_1, true);
+motor conveyor = motor(PORT3, ratio18_1, true);
+motor intake = motor(PORT11, ratio18_1, true);
 
 digital_out piston = digital_out(Brain.ThreeWirePort.A);
 
@@ -54,16 +54,12 @@ bool drivetrainRNeedsToBeStopped = true;
 // Robot components
 bool pistonState = false;
 
-/*---------------------------------------------------------------------------*/
-/*                          Pre-Autonomous Functions                         */
-/*                                                                           */
-/*  You may want to perform some actions before the competition starts.      */
-/*  Do them in the following function.  You must return from this function   */
-/*  or the autonomous and usercontrol tasks will not be started.  This       */
-/*  function is only called once after the V5 has been powered on and        */
-/*  not every time that the robot is disabled.                               */
-/*---------------------------------------------------------------------------*/
-
+/**
+ * Initializes the robot's systems before the competition starts.
+ * This function is only called once after the V5 has been powered on and not every time that the robot is disabled.
+ *
+ * @return None
+ */
 void initalize(void) {
     // All activities that occur before the competition starts.
     Drivetrain.setDriveVelocity(100, percent);
@@ -85,7 +81,7 @@ void initalize(void) {
  * @return None
  */
 void autonomous(void) {
-    // All the autonomous code
+    // All activities that occur during the autonomous phase
 }
 
 void controlDrivetrain() {
@@ -115,7 +111,7 @@ void controlPiston() {
     bool currentButtonState = Controller.ButtonA.pressing();
 
     if (currentButtonState && !lastButtonState) {  // Detect button press
-        pistonState = !pistonState;                // Toggle the piston state
+        pistonState = !pistonState;  // Toggle the piston state
         piston.set(pistonState);
     }
 
