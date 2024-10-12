@@ -46,8 +46,8 @@ bool stuckHelperCodeEnabled = false;
 bool infoCodeEnabled = false;
 
 // Define variables used for controlling motors
-bool conveyorMotorsStopped = true;
 bool intakeMotorsStopped = true;
+bool conveyorMotorsStopped = true;
 bool drivetrainLNeedsToBeStopped = true;
 bool drivetrainRNeedsToBeStopped = true;
 
@@ -108,7 +108,7 @@ void controlDrivetrain() {
 
 void controlPiston() {
     static bool lastButtonState = false;  // Track the previous state of the button
-    bool currentButtonState = Controller.ButtonA.pressing();
+    bool currentButtonState = Controller.ButtonL1.pressing();
 
     if (currentButtonState && !lastButtonState) {  // Detect button press
         pistonState = !pistonState;  // Toggle the piston state
@@ -119,28 +119,39 @@ void controlPiston() {
 }
 
 void controlConveyor() {
-    // Function to handle conveyor control
-    if (Controller.ButtonL1.pressing()) {
+    // Function to handle intake and conveyor control
+    if (Controller.ButtonR1.pressing()) {
+        conveyor.spin(forward);
+        intake.spin(forward);
+        intakeMotorsStopped = false;
+        conveyorMotorsStopped = false;
+    } else if (Controller.ButtonR2.pressing()) {
+        conveyor.spin(reverse);
+        intake.spin(reverse);
+        intakeMotorsStopped = false;
+        conveyorMotorsStopped = false;
+    }
+
+    if (Controller.ButtonUp.pressing()) {
         conveyor.spin(forward);
         conveyorMotorsStopped = false;
-    } else if (Controller.ButtonL2.pressing()) {
+    } else if (Controller.ButtonDown.pressing()) {
         conveyor.spin(reverse);
         conveyorMotorsStopped = false;
-    } else if (!conveyorMotorsStopped) {
+    }
+    if (Controller.ButtonX.pressing()) {
+        intake.spin(forward);
+        intakeMotorsStopped = false;
+    } else if (Controller.ButtonB.pressing()) {
+        intake.spin(reverse);
+        intakeMotorsStopped = false;
+    }
+
+    if (!conveyorMotorsStopped) {
         conveyor.stop();
         conveyorMotorsStopped = true;
     }
-}
-
-void controlIntake() {
-    // Function to handle intake control
-    if (Controller.ButtonR1.pressing()) {
-        intake.spin(forward);
-        intakeMotorsStopped = false;
-    } else if (Controller.ButtonR2.pressing()) {
-        intake.spin(reverse);
-        intakeMotorsStopped = false;
-    } else if (!intakeMotorsStopped) {
+    if (!intakeMotorsStopped) {
         intake.stop();
         intakeMotorsStopped = true;
     }
@@ -184,7 +195,6 @@ int controllerLoop() {
         if (remoteControlCodeEnabled) {
             controlDrivetrain();
             controlConveyor();
-            controlIntake();
             controlPiston();
         }
         wait(20, msec);
