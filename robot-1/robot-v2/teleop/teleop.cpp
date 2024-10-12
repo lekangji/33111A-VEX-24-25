@@ -79,29 +79,14 @@ void initalize(void) {
     Brain.Screen.setFont(mono30);
 }
 
-/*---------------------------------------------------------------------------*/
-/*                                                                           */
-/*                              Autonomous Task                              */
-/*                                                                           */
-/*  This task is used to control your robot during the autonomous phase of   */
-/*  a VEX Competition.                                                       */
-/*                                                                           */
-/*  You must modify the code to add your own robot specific commands here.   */
-/*---------------------------------------------------------------------------*/
-
+/**
+ * This function is used to control the robot during the autonomous phase of a VEX Competition.
+ *
+ * @return None
+ */
 void autonomous(void) {
     // All the autonomous code
 }
-
-/*---------------------------------------------------------------------------*/
-/*                                                                           */
-/*                              User Control Task                            */
-/*                                                                           */
-/*  This task is used to control your robot during the user control phase of */
-/*  a VEX Competition.                                                       */
-/*                                                                           */
-/*  You must modify the code to add your own robot specific commands here.   */
-/*---------------------------------------------------------------------------*/
 
 void controlDrivetrain() {
     // Function to handle drivetrain motor control
@@ -165,18 +150,38 @@ void controlIntake() {
     }
 }
 
+/**
+ * Continuously checks the conveyor's velocity and current, 
+ * and triggers the controller to rumble if the conveyor is stuck.
+ *
+ * @return 0 if stuckHelperCodeEnabled is false
+ */
 int stuckHelperLoop() {
+    bool alreadyRumbled = false;
+
     if (!stuckHelperCodeEnabled) {
         return 0;
     }
 
     while (true) {
+        if (conveyor.velocity(rpm) < 20 && conveyor.current() > 5 && !alreadyRumbled) {
+            Controller.rumble(".");
+            alreadyRumbled = true;
+        } else {
+            alreadyRumbled = false;
+        }
+
         // if too high current and too low velocity, stop
         wait(20, msec);
     }
     return 0;
 }
 
+/**
+ * Continuously handles controller input and updates the robot's systems accordingly.
+ *
+ * @return None
+ */
 int controllerLoop() {
     // Handle controller input
     while (true) {
@@ -191,6 +196,11 @@ int controllerLoop() {
     return 0;
 }
 
+/**
+ * Continuously prints information about the robot's brain and drivetrain to the screen.
+ *
+ * @return 0 if infoCodeEnabled is false
+ */
 int infoLoop() {
     if (!infoCodeEnabled) {
         return 0;
@@ -219,6 +229,11 @@ int infoLoop() {
     return 0;
 }
 
+/**
+ * Handles all user control of the robot during the driver control phase of a VEX Competition.
+ *
+ * @return None
+ */
 void userControl(void) {
     Controller.rumble(". . . -");
 
@@ -227,7 +242,6 @@ void userControl(void) {
     task infoTask(infoLoop);
 }
 
-// Set up callbacks and stuff
 int main() {
     // Set up callbacks for autonomous and driver control periods.
     Competition.autonomous(autonomous);
