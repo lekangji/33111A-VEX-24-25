@@ -46,8 +46,8 @@ bool infoCodeEnabled = false;
 bool autonomousCodeEnabled = false;
 
 // Define variables used for controlling motors
-bool intakeMotorsStopped = true;
-bool conveyorMotorsStopped = true;
+bool conveyorActive = false;
+bool intakeActive = false;
 bool drivetrainLNeedsToBeStopped = true;
 bool drivetrainRNeedsToBeStopped = true;
 
@@ -139,42 +139,45 @@ void controlPiston() {
  * Otherwise, the motors will stop if they are not already stopped.
  */
 void controlIntakeAndConveyor() {
-    // Function to handle intake and conveyor control
+    // Handle intake and conveyor control
     if (Controller.ButtonR1.pressing()) {
         conveyor.spin(forward);
         intake.spin(forward);
-        intakeMotorsStopped = false;
-        conveyorMotorsStopped = false;
+        conveyorActive = true;
+        intakeActive = true;
     } else if (Controller.ButtonR2.pressing()) {
         conveyor.spin(reverse);
         intake.spin(reverse);
-        intakeMotorsStopped = false;
-        conveyorMotorsStopped = false;
+        conveyorActive = true;
+        intakeActive = true;
+    } else {
+        // Handle individual conveyor control
+        if (Controller.ButtonUp.pressing()) {
+            conveyor.spin(forward);
+            conveyorActive = true;
+        } else if (Controller.ButtonDown.pressing()) {
+            conveyor.spin(reverse);
+            conveyorActive = true;
+        } else {
+            conveyorActive = false;
+        }
+        // Handle individual intake control
+        if (Controller.ButtonX.pressing()) {
+            intake.spin(forward);
+            intakeActive = true;
+        } else if (Controller.ButtonB.pressing()) {
+            intake.spin(reverse);
+            intakeActive = true;
+        } else {
+            intakeActive = false;
+        }
     }
 
-    if (Controller.ButtonUp.pressing()) {
-        conveyor.spin(forward);
-        conveyorMotorsStopped = false;
-    } else if (Controller.ButtonDown.pressing()) {
-        conveyor.spin(reverse);
-        conveyorMotorsStopped = false;
-    }
-    if (Controller.ButtonX.pressing()) {
-        intake.spin(forward);
-        intakeMotorsStopped = false;
-    } else if (Controller.ButtonB.pressing()) {
-        intake.spin(reverse);
-        intakeMotorsStopped = false;
-    }
-
-    if (!conveyorMotorsStopped) {
+    // Stop conveyor and intake if no active command
+    if (!conveyorActive)
         conveyor.stop();
-        conveyorMotorsStopped = true;
-    }
-    if (!intakeMotorsStopped) {
+    if (!intakeActive)
         intake.stop();
-        intakeMotorsStopped = true;
-    }
 }
 
 /**
@@ -189,7 +192,7 @@ int stuckHelperLoop() {
 
     bool alreadyRumbled = false;
     while (true) {
-        if ((conveyor.velocity(rpm) < 20 && conveyor.current() > 5) || (intake.velocity(rpm) < 20 && intake.current() > 5) && !alreadyRumbled) {
+        if (((conveyor.velocity(rpm) < 20 && conveyor.current() > 5) || (intake.velocity(rpm) < 20 && intake.current() > 5)) && !alreadyRumbled) {
             Controller.rumble(".");
             alreadyRumbled = true;
         } else {
