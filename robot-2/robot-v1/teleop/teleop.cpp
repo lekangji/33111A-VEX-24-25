@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "vex.h"
 
 using namespace vex;
@@ -41,9 +40,10 @@ motor intake = motor(PORT11, ratio18_1, true);
 digital_out piston = digital_out(Brain.ThreeWirePort.A);
 
 // Define variables that enable/disable sections of code
-bool remoteControlCodeEnabled = true;
+bool teleopCodeEnabled = true;
 bool stuckHelperCodeEnabled = false;
 bool infoCodeEnabled = false;
+bool autonomousCodeEnabled = false;
 
 // Define variables used for controlling motors
 bool intakeMotorsStopped = true;
@@ -81,6 +81,9 @@ void initalize(void) {
  * @return None
  */
 void autonomous(void) {
+    if (!autonomousCodeEnabled)
+        return;
+    
     // All activities that occur during the autonomous phase
 }
 
@@ -106,6 +109,11 @@ void controlDrivetrain() {
     handleMotorControl(rightDriveSmart, drivetrainRightSideSpeed, drivetrainRNeedsToBeStopped);
 }
 
+/**
+ * Toggles the piston state each time the L1 button is pressed.
+ *
+ * @note Uses a static variable to track the previous state of the button.
+ */
 void controlPiston() {
     static bool lastButtonState = false;  // Track the previous state of the button
     bool currentButtonState = Controller.ButtonL1.pressing();
@@ -118,7 +126,19 @@ void controlPiston() {
     lastButtonState = currentButtonState;  // Update the previous state
 }
 
-void controlConveyor() {
+/**
+ * Handles the control of the intake and conveyor motors based on the controller's input.
+ *
+ * If R1 is pressed, the intake and conveyor motors spin forward.
+ * If R2 is pressed, the intake and conveyor motors spin reverse.
+ * If the Up button is pressed, the conveyor motor spins forward.
+ * If the Down button is pressed, the conveyor motor spins reverse.
+ * If the X button is pressed, the intake motor spins forward.
+ * If the B button is pressed, the intake motor spins reverse.
+ *
+ * Otherwise, the motors will stop if they are not already stopped.
+ */
+void controlIntakeAndConveyor() {
     // Function to handle intake and conveyor control
     if (Controller.ButtonR1.pressing()) {
         conveyor.spin(forward);
@@ -164,14 +184,12 @@ void controlConveyor() {
  * @return 0 if stuckHelperCodeEnabled is false
  */
 int stuckHelperLoop() {
-    bool alreadyRumbled = false;
-
-    if (!stuckHelperCodeEnabled) {
+    if (!stuckHelperCodeEnabled)
         return 0;
-    }
 
+    bool alreadyRumbled = false;
     while (true) {
-        if (conveyor.velocity(rpm) < 20 && conveyor.current() > 5 && !alreadyRumbled) {
+        if ((conveyor.velocity(rpm) < 20 && conveyor.current() > 5) || (intake.velocity(rpm) < 20 && intake.current() > 5) && !alreadyRumbled) {
             Controller.rumble(".");
             alreadyRumbled = true;
         } else {
@@ -190,16 +208,16 @@ int stuckHelperLoop() {
  * @return None
  */
 int controllerLoop() {
+    if (!teleopCodeEnabled)
+        return 0;
+    
     // Handle controller input
-    while (true) {
-        if (remoteControlCodeEnabled) {
-            controlDrivetrain();
-            controlConveyor();
-            controlPiston();
-        }
+    while (true) { 
+        controlDrivetrain();
+        controlIntakeAndConveyor();
+        controlPiston();
         wait(20, msec);
     }
-    return 0;
 }
 
 /**
@@ -208,9 +226,8 @@ int controllerLoop() {
  * @return 0 if infoCodeEnabled is false
  */
 int infoLoop() {
-    if (!infoCodeEnabled) {
+    if (!infoCodeEnabled)
         return 0;
-    }
 
     // Prints info on brain & controller
     while (true) {
