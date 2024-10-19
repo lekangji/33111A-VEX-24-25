@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+// #include <unordered_map.h>
+// #include <vector.tcc>
 #include "vex.h"
 
 using namespace vex;
@@ -32,26 +34,29 @@ motor_group leftDriveSmart = motor_group(leftMotorA, leftMotorB);
 motor rightMotorA = motor(PORT9, ratio18_1, false);
 motor rightMotorB = motor(PORT10, ratio18_1, false);
 motor_group rightDriveSmart = motor_group(rightMotorA, rightMotorB);
-drivetrain Drivetrain = drivetrain(leftDriveSmart, rightDriveSmart, 319.19, 295, 40, mm, 1);
+// left motor, right motor, wheelTravel (circumfrence of wheels), trackWith, wheelBase, units, GearRatio
+drivetrain Drivetrain = drivetrain(leftDriveSmart, rightDriveSmart, 259.34, 318, 229, mm, 2);
 
 motor conveyor = motor(PORT3, ratio18_1, true);
 motor intake = motor(PORT11, ratio18_1, true);
 
 digital_out piston = digital_out(Brain.ThreeWirePort.A);
 
-// Define variables that enable/disable sections of code
+// Variables that enable/disable sections of code
 bool teleopCodeEnabled = true;
 bool stuckHelperCodeEnabled = false;
 bool infoCodeEnabled = false;
-bool autonomousCodeEnabled = false;
+bool autonomousCodeEnabled = true;
 
-// Define variables used for controlling motors
+// Variables for autonomous
+unsigned short autonomousRoute = 0;
+
+// Variables used for controlling motors and components
+unsigned short drivetrainMode = 1;
 bool conveyorActive = false;
 bool intakeActive = false;
 bool drivetrainLNeedsToBeStopped = true;
 bool drivetrainRNeedsToBeStopped = true;
-
-// Robot components
 bool pistonState = false;
 
 /**
@@ -83,14 +88,68 @@ void initalize(void) {
 void autonomous(void) {
     if (!autonomousCodeEnabled)
         return;
-    
+
     // All activities that occur during the autonomous phase
+    // Setup motors
+    Drivetrain.setStopping(brake);
+
+    // Create a map with route numbers as keys and commands as values (vector of strings)
+    //std::unordered_map<int, std::vector<std::string>> robotCommands;
+
+    // Adding commands to the map for different routes
+    //robotCommands[1] = { "Drivetrain.driveFor", "10" }; // command and a distance
+    //robotCommands[2] = { "Drivetrain.turnFor", "90" };
+    //robotCommands[3] = { "Drivetrain.turnFor", "3 seconds" };
+    
+    // Autonomous
+    if (autonomousRoute == 0) {
+        // Testing routes only
+        Drivetrain.driveFor(48, inches);
+    } else if (autonomousRoute == 1) {
+        Drivetrain.driveFor(-46, inches);
+        piston.set(true);
+        wait(100, msec);
+        Drivetrain.turnFor(-90, degrees);
+        wait(100, msec);
+        Drivetrain.driveFor(28, inches);
+        wait(100, msec);
+        Drivetrain.turnFor(-45, degrees);
+        wait(100, msec);
+        Drivetrain.driveFor(30, inches);
+    } else if (autonomousRoute == 2) {
+        Drivetrain.driveFor(8, inches);
+        wait(100, msec);
+        Drivetrain.turnFor(-90, degrees);
+        wait(100, msec);
+        Drivetrain.driveFor(28, inches);
+        wait(100, msec);
+        Drivetrain.turnFor(-45, degrees);
+        wait(100, msec);
+        Drivetrain.driveFor(30, inches);
+    } else {
+        Brain.Screen.print("No autonomous route found");
+    }
 }
 
 void controlDrivetrain() {
+    static bool lastButtonStateDrive= true;  // Track the previous state of the button
+    bool currentButtonStateDrive = Controller.ButtonY.pressing();
+    if (currentButtonStateDrive && !lastButtonStateDrive) {  // Detect button press
+        drivetrainMode++;
+        drivetrainMode %= 2;
+    }
+    lastButtonStateDrive = currentButtonStateDrive;  // Update the previous state
+
+    int drivetrainLeftSideSpeed;
+    int drivetrainRightSideSpeed;
     // Function to handle drivetrain motor control
-    int drivetrainLeftSideSpeed = Controller.Axis3.position();
-    int drivetrainRightSideSpeed = Controller.Axis2.position();
+    if (drivetrainMode == 0) {
+        drivetrainLeftSideSpeed = Controller.Axis3.position();
+        drivetrainRightSideSpeed = Controller.Axis2.position();
+    } else if (drivetrainMode == 1) {
+        drivetrainLeftSideSpeed = Controller.Axis3.position() + Controller.Axis1.position();
+        drivetrainRightSideSpeed = Controller.Axis3.position() - Controller.Axis1.position();
+    }
 
     auto handleMotorControl = [](motor_group& motorGroup, int speed, bool& motorNeedsToBeStopped) {
         if (abs(speed) < 5) {
@@ -260,8 +319,11 @@ int infoLoop() {
  *
  * @return None
  */
-void userControl(void) {
-    Controller.rumble(". . . -");
+void driverControl(void) {
+    // Setup for motors
+    Drivetrain.setStopping(brake);
+
+    // Controller.rumble(". . . -");
 
     task controllerTask(controllerLoop);
     task stuckHelperTask(stuckHelperLoop);
@@ -269,12 +331,12 @@ void userControl(void) {
 }
 
 int main() {
-    // Set up callbacks for autonomous and driver control periods.
-    Competition.autonomous(autonomous);
-    Competition.drivercontrol(userControl);
-
     // Run the pre-autonomous function.
     initalize();
+
+    // Set up callbacks for autonomous and driver control periods.
+    Competition.autonomous(autonomous);
+    Competition.drivercontrol(driverControl);
 
     // Prevent main from exiting with an infinite loop.
     while (true) {
