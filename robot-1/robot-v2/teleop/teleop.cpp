@@ -28,14 +28,14 @@ competition Competition;
 
 // Define all needed devices:
 controller Controller = controller(primary);
-motor leftMotorA = motor(PORT1, ratio18_1, true);
-motor leftMotorB = motor(PORT2, ratio18_1, true);
-motor_group leftDriveSmart = motor_group(leftMotorA, leftMotorB);
-motor rightMotorA = motor(PORT9, ratio18_1, false);
-motor rightMotorB = motor(PORT10, ratio18_1, false);
-motor_group rightDriveSmart = motor_group(rightMotorA, rightMotorB);
-// left motor, right motor, wheelTravel (circumfrence of wheels), trackWith, wheelBase, units, GearRatio
-drivetrain Drivetrain = drivetrain(leftDriveSmart, rightDriveSmart, 259.34, 318, 229, mm, 2);
+motor leftMotorFront = motor(PORT1, ratio18_1, true);
+motor leftMotorBack = motor(PORT2, ratio18_1, true);
+motor_group leftDriveSmart = motor_group(leftMotorFront, leftMotorBack);
+motor rightMotorFront = motor(PORT9, ratio18_1, false);
+motor rightMotorBack = motor(PORT10, ratio18_1, false);
+motor_group rightDriveSmart = motor_group(rightMotorFront, rightMotorBack);
+// left motor, right motor, wheelTravel (circumfrence of wheels), trackWith, wheelBase, units, gearRatio
+drivetrain Drivetrain = drivetrain(leftDriveSmart, rightDriveSmart, 259.34, 320, 230, mm, 2);
 
 motor conveyor = motor(PORT3, ratio18_1, true);
 motor intake = motor(PORT11, ratio18_1, true);
@@ -49,10 +49,10 @@ bool infoCodeEnabled = false;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 0;
+unsigned short autonomousRoute = 1;
 
 // Variables used for controlling motors and components
-unsigned short drivetrainMode = 1;
+unsigned short drivetrainMode = 0;
 bool conveyorActive = false;
 bool intakeActive = false;
 bool drivetrainLNeedsToBeStopped = true;
@@ -90,8 +90,11 @@ void autonomous(void) {
         return;
 
     // All activities that occur during the autonomous phase
+    
     // Setup motors
     Drivetrain.setStopping(brake);
+    Drivetrain.setDriveVelocity(70, percent);
+    Drivetrain.setTurnVelocity(30, percent);
 
     // Create a map with route numbers as keys and commands as values (vector of strings)
     //std::unordered_map<int, std::vector<std::string>> robotCommands;
@@ -103,32 +106,56 @@ void autonomous(void) {
     
     // Autonomous
     if (autonomousRoute == 0) {
-        // Testing routes only
-        Drivetrain.driveFor(48, inches);
+        // Testing purposes only
+        Drivetrain.driveFor(24, inches);
     } else if (autonomousRoute == 1) {
-        Drivetrain.driveFor(-46, inches);
+        piston.set(false);
+        Drivetrain.driveFor(-30, inches);
         piston.set(true);
+        wait(250, msec);
+        Drivetrain.setTimeout(1.5, seconds);
+        Drivetrain.turnFor(-75, degrees);
+        wait(100, msec);
+        intake.spin(forward);
+        conveyor.spin(forward);
+        Drivetrain.setTimeout(1.5, seconds);
+        Drivetrain.driveFor(26, inches);
         wait(100, msec);
         Drivetrain.turnFor(-90, degrees);
         wait(100, msec);
-        Drivetrain.driveFor(28, inches);
-        wait(100, msec);
-        Drivetrain.turnFor(-45, degrees);
-        wait(100, msec);
-        Drivetrain.driveFor(30, inches);
+        intake.stop();
+        Drivetrain.setTimeout(1.5, seconds);
+        Drivetrain.driveFor(26, inches);
     } else if (autonomousRoute == 2) {
-        Drivetrain.driveFor(8, inches);
+        piston.set(false);
+        Drivetrain.driveFor(-30, inches);
+        piston.set(true);
+        wait(250, msec);
+        Drivetrain.turnFor(75, degrees);
         wait(100, msec);
-        Drivetrain.turnFor(-90, degrees);
+        intake.spin(forward);
+        conveyor.spin(forward);
+        Drivetrain.driveFor(26, inches);
         wait(100, msec);
-        Drivetrain.driveFor(28, inches);
+        Drivetrain.turnFor(65, degrees);
         wait(100, msec);
-        Drivetrain.turnFor(-45, degrees);
+        Drivetrain.driveFor(14, inches);
         wait(100, msec);
-        Drivetrain.driveFor(30, inches);
+        Drivetrain.driveFor(-12, inches);
+        wait(100, msec);
+        Drivetrain.turnFor(10, degrees);
+        wait(100, msec);
+        Drivetrain.driveFor(12, inches);
+        wait(100, msec);
+        intake.stop();
+        Drivetrain.driveFor(26, inches);
     } else {
         Brain.Screen.print("No autonomous route found");
     }
+
+    intake.stop();
+    conveyor.stop();
+    Drivetrain.setTimeout(0, seconds);
 }
 
 void controlDrivetrain() {
@@ -321,7 +348,7 @@ int infoLoop() {
  */
 void driverControl(void) {
     // Setup for motors
-    Drivetrain.setStopping(brake);
+    Drivetrain.setStopping(coast);
 
     // Controller.rumble(". . . -");
 
