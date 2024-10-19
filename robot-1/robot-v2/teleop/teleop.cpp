@@ -93,8 +93,8 @@ void autonomous(void) {
     
     // Setup motors
     Drivetrain.setStopping(brake);
-    Drivetrain.setDriveVelocity(70, percent);
-    Drivetrain.setTurnVelocity(30, percent);
+    Drivetrain.setDriveVelocity(80, percent);
+    Drivetrain.setTurnVelocity(40, percent);
 
     // Create a map with route numbers as keys and commands as values (vector of strings)
     //std::unordered_map<int, std::vector<std::string>> robotCommands;
@@ -143,12 +143,15 @@ void autonomous(void) {
         wait(100, msec);
         Drivetrain.driveFor(-12, inches);
         wait(100, msec);
-        Drivetrain.turnFor(10, degrees);
+        Drivetrain.turnFor(20, degrees);
         wait(100, msec);
         Drivetrain.driveFor(12, inches);
         wait(100, msec);
         intake.stop();
-        Drivetrain.driveFor(26, inches);
+        Drivetrain.setTimeout(1, seconds);
+        Drivetrain.turnFor(-30, degrees);
+        Drivetrain.setTimeout(1, seconds);
+        Drivetrain.driveFor(-20, inches);
     } else {
         Brain.Screen.print("No autonomous route found");
     }
