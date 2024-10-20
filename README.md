@@ -8,6 +8,8 @@
 ## Robot 1
 
 Middle school robot
+- V1 &rarr; First version of the robot. Sliding conveyor.
+- V2 &rarr; Second version. Hook chain.
 
 ### Version 2
 
@@ -19,3 +21,4 @@ The code in this folder will be similar if not the same as the robot-2/robot-v1 
 ## Robot 2
 
 High school robot
+- V1 &rarr; Hook chain robot.
