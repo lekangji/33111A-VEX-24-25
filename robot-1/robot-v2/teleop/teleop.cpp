@@ -49,7 +49,8 @@ bool infoCodeEnabled = false;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 1;
+unsigned short autonomousRoute = 2;
+short autonomousColor = -1;  // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
 unsigned short drivetrainMode = 0;
@@ -113,52 +114,54 @@ void autonomous(void) {
         Drivetrain.driveFor(-30, inches);
         piston.set(true);
         wait(250, msec);
-        Drivetrain.setTimeout(1.5, seconds);
-        Drivetrain.turnFor(-75, degrees);
+        Drivetrain.setTimeout(1500, msec);
+        Drivetrain.turnFor(-75 * autonomousColor, degrees);
         wait(100, msec);
         intake.spin(forward);
         conveyor.spin(forward);
-        Drivetrain.setTimeout(1.5, seconds);
+        Drivetrain.setTimeout(1500, msec);
         Drivetrain.driveFor(26, inches);
         wait(300, msec);
-        Drivetrain.turnFor(-90, degrees);
+        Drivetrain.turnFor(-130 * autonomousColor, degrees);
         wait(100, msec);
         intake.stop();
-        Drivetrain.setTimeout(1.5, seconds);
-        Drivetrain.driveFor(26, inches);
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.driveFor(42, inches);
     } else if (autonomousRoute == 2) {
         piston.set(false);
         Drivetrain.driveFor(-30, inches);
         piston.set(true);
         wait(250, msec);
-        Drivetrain.turnFor(75, degrees);
+        Drivetrain.turnFor(68 * autonomousColor, degrees);
         wait(100, msec);
         intake.spin(forward);
         conveyor.spin(forward);
         Drivetrain.driveFor(26, inches);
-        wait(100, msec);
-        Drivetrain.turnFor(65, degrees);
-        wait(100, msec);
-        Drivetrain.driveFor(14, inches);
-        wait(100, msec);
-        Drivetrain.driveFor(-12, inches);
-        wait(100, msec);
-        Drivetrain.turnFor(20, degrees);
+        wait(250, msec);
+        Drivetrain.turnFor(48 * autonomousColor, degrees);
         wait(100, msec);
         Drivetrain.driveFor(12, inches);
+        wait(800, msec);
+        Drivetrain.driveFor(-8, inches);
         wait(100, msec);
-        intake.stop();
+        Drivetrain.turnFor(18 * autonomousColor, degrees);
+        wait(100, msec);
+        Drivetrain.driveFor(10, inches);
+        wait(1000, msec);
         Drivetrain.setTimeout(1, seconds);
-        Drivetrain.turnFor(-30, degrees);
+        Drivetrain.turnFor(-45 * autonomousColor, degrees);
+        wait(100, msec);
+        Drivetrain.setTimeout(2500, msec);
+        Drivetrain.driveFor(-45, inches);
+        Drivetrain.turnFor(80 * autonomousColor, degrees);
         Drivetrain.setTimeout(1, seconds);
-        Drivetrain.driveFor(-20, inches);
+        Drivetrain.driveFor(14, inches);
     } else {
         Brain.Screen.print("No autonomous route found");
     }
 
     intake.stop();
     conveyor.stop();
-    Drivetrain.setTimeout(0, seconds);
 }
 
 void controlDrivetrain() {
@@ -170,8 +173,8 @@ void controlDrivetrain() {
     }
     lastButtonStateDrive = currentButtonStateDrive;  // Update the previous state
 
-    int drivetrainLeftSideSpeed;
-    int drivetrainRightSideSpeed;
+    int drivetrainLeftSideSpeed = 0;
+    int drivetrainRightSideSpeed = 0;
     // Function to handle drivetrain motor control
     if (drivetrainMode == 0) {
         drivetrainLeftSideSpeed = Controller.Axis3.position();
@@ -350,7 +353,8 @@ int infoLoop() {
  * @return None
  */
 void driverControl(void) {
-    // Setup for motors
+    // Setup for motors (in case autonomous does not finish in time)
+    Drivetrain.setTimeout(0, seconds);
     Drivetrain.setStopping(coast);
 
     // Controller.rumble(". . . -");
