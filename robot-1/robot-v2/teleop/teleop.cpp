@@ -120,7 +120,7 @@ void autonomous(void) {
         conveyor.spin(forward);
         Drivetrain.setTimeout(1.5, seconds);
         Drivetrain.driveFor(26, inches);
-        wait(100, msec);
+        wait(300, msec);
         Drivetrain.turnFor(-90, degrees);
         wait(100, msec);
         intake.stop();
