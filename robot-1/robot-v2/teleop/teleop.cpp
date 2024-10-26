@@ -49,7 +49,7 @@ bool infoCodeEnabled = false;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 1; // 0 = testing, 1 = simple, 2 = complex
+unsigned short autonomousRoute = 2;  // 0 = testing, 1 = simple, 2 = complex
 short autonomousColor = -1;  // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
@@ -153,7 +153,7 @@ void autonomous(void) {
         wait(100, msec);
         Drivetrain.setTimeout(2500, msec);
         Drivetrain.driveFor(-45, inches);
-        Drivetrain.turnFor(80 * autonomousColor, degrees);
+        Drivetrain.turnFor(75 * autonomousColor, degrees);
         Drivetrain.setTimeout(1, seconds);
         Drivetrain.driveFor(14, inches);
     } else {
