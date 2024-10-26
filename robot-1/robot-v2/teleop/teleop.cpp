@@ -91,20 +91,20 @@ void autonomous(void) {
         return;
 
     // All activities that occur during the autonomous phase
-    
+
     // Setup motors
     Drivetrain.setStopping(brake);
     Drivetrain.setDriveVelocity(80, percent);
     Drivetrain.setTurnVelocity(40, percent);
 
     // Create a map with route numbers as keys and commands as values (vector of strings)
-    //std::unordered_map<int, std::vector<std::string>> robotCommands;
+    // std::unordered_map<int, std::vector<std::string>> robotCommands;
 
     // Adding commands to the map for different routes
-    //robotCommands[1] = { "Drivetrain.driveFor", "10" }; // command and a distance
-    //robotCommands[2] = { "Drivetrain.turnFor", "90" };
-    //robotCommands[3] = { "Drivetrain.turnFor", "3 seconds" };
-    
+    // robotCommands[1] = { "Drivetrain.driveFor", "10" }; // command and a distance
+    // robotCommands[2] = { "Drivetrain.turnFor", "90" };
+    // robotCommands[3] = { "Drivetrain.turnFor", "3 seconds" };
+
     // Autonomous
     if (autonomousRoute == 0) {
         // Testing purposes only
@@ -165,14 +165,13 @@ void autonomous(void) {
 }
 
 void controlDrivetrain() {
-    static bool lastButtonStateDrive= true;  // Track the previous state of the button
+    static bool lastButtonStateDrive = true;  // Track the previous state of the button
     bool currentButtonStateDrive = Controller.ButtonY.pressing();
     if (currentButtonStateDrive && !lastButtonStateDrive) {  // Detect button press
         drivetrainMode++;
         drivetrainMode %= 2;
     }
     lastButtonStateDrive = currentButtonStateDrive;  // Update the previous state
-
     int drivetrainLeftSideSpeed = 0;
     int drivetrainRightSideSpeed = 0;
     // Function to handle drivetrain motor control
@@ -211,7 +210,7 @@ void controlPiston() {
     bool currentButtonState = Controller.ButtonL1.pressing();
 
     if (currentButtonState && !lastButtonState) {  // Detect button press
-        pistonState = !pistonState;  // Toggle the piston state
+        pistonState = !pistonState;                // Toggle the piston state
         piston.set(pistonState);
     }
 
@@ -273,7 +272,7 @@ void controlIntakeAndConveyor() {
 }
 
 /**
- * Continuously checks the conveyor's velocity and current, 
+ * Continuously checks the conveyor's velocity and current,
  * and triggers the controller to rumble if the conveyor is stuck.
  *
  * @return 0 if stuckHelperCodeEnabled is false
@@ -305,9 +304,9 @@ int stuckHelperLoop() {
 int controllerLoop() {
     if (!teleopCodeEnabled)
         return 0;
-    
+
     // Handle controller input
-    while (true) { 
+    while (true) {
         controlDrivetrain();
         controlIntakeAndConveyor();
         controlPiston();
