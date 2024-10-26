@@ -115,7 +115,7 @@ void autonomous(void) {
         piston.set(true);
         wait(250, msec);
         Drivetrain.setTimeout(1500, msec);
-        Drivetrain.turnFor(-70 * autonomousColor, degrees);
+        Drivetrain.turnFor(-68 * autonomousColor, degrees);
         wait(100, msec);
         intake.spin(forward);
         conveyor.spin(forward);
