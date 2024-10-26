@@ -122,7 +122,7 @@ void autonomous(void) {
         Drivetrain.setTimeout(1500, msec);
         Drivetrain.driveFor(26, inches);
         wait(300, msec);
-        Drivetrain.turnFor(-110 * autonomousColor, degrees);
+        Drivetrain.turnFor(-118 * autonomousColor, degrees);
         wait(100, msec);
         intake.stop();
         Drivetrain.setTimeout(2800, msec);
