@@ -50,7 +50,7 @@ bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
 unsigned short autonomousRoute = 2;  // 0 = testing, 1 = simple, 2 = complex
-short autonomousColor = -1;  // Let 1 be red and -1 be blue
+short autonomousColor = -1;          // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
 unsigned short drivetrainMode = 0;
@@ -165,16 +165,12 @@ void autonomous(void) {
 }
 
 void controlDrivetrain() {
+    // Function to handle drivetrain control type
     static bool lastButtonStateDrive = true;  // Track the previous state of the button
     bool currentButtonStateDrive = Controller.ButtonY.pressing();
-    if (currentButtonStateDrive && !lastButtonStateDrive) {  // Detect button press
-        drivetrainMode++;
-        drivetrainMode %= 2;
-    }
-    lastButtonStateDrive = currentButtonStateDrive;  // Update the previous state
-    int drivetrainLeftSideSpeed = 0;
-    int drivetrainRightSideSpeed = 0;
-    // Function to handle drivetrain motor control
+    int drivetrainLeftSideSpeed = 0, drivetrainRightSideSpeed = 0;
+    if (currentButtonStateDrive && !lastButtonStateDrive)  // Detect button press
+        drivetrainMode = (drivetrainMode + 1) % 2;    
     if (drivetrainMode == 0) {
         drivetrainLeftSideSpeed = Controller.Axis3.position();
         drivetrainRightSideSpeed = Controller.Axis2.position();
@@ -182,6 +178,7 @@ void controlDrivetrain() {
         drivetrainLeftSideSpeed = Controller.Axis3.position() + Controller.Axis1.position();
         drivetrainRightSideSpeed = Controller.Axis3.position() - Controller.Axis1.position();
     }
+    lastButtonStateDrive = currentButtonStateDrive;  // Update the previous state
 
     auto handleMotorControl = [](motor_group& motorGroup, int speed, bool& motorNeedsToBeStopped) {
         if (abs(speed) < 5) {
@@ -249,9 +246,9 @@ void controlIntakeAndConveyor() {
         } else if (Controller.ButtonDown.pressing()) {
             conveyor.spin(reverse);
             conveyorActive = true;
-        } else {
+        } else
             conveyorActive = false;
-        }
+            
         // Handle individual intake control
         if (Controller.ButtonX.pressing()) {
             intake.spin(forward);
@@ -259,9 +256,8 @@ void controlIntakeAndConveyor() {
         } else if (Controller.ButtonB.pressing()) {
             intake.spin(reverse);
             intakeActive = true;
-        } else {
+        } else
             intakeActive = false;
-        }
     }
 
     // Stop conveyor and intake if no active command
@@ -286,9 +282,8 @@ int stuckHelperLoop() {
         if (((conveyor.velocity(rpm) < 20 && conveyor.current() > 5) || (intake.velocity(rpm) < 20 && intake.current() > 5)) && !alreadyRumbled) {
             Controller.rumble(".");
             alreadyRumbled = true;
-        } else {
+        } else
             alreadyRumbled = false;
-        }
 
         // if too high current and too low velocity, stop
         wait(20, msec);
