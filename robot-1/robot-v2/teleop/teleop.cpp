@@ -15,15 +15,9 @@
 // #include <unordered_map.h>
 // #include <vector.tcc>
 #include "vex.h"
-
 using namespace vex;
-// using signature = vision::signature;
-// using code = vision::code;
 
-// A global instance of brain used for printing to the V5 Brain screen
 brain Brain;
-
-// A global instance of competition
 competition Competition;
 
 // Define all needed devices:
@@ -107,9 +101,10 @@ void autonomous(void) {
 
     // Autonomous
     if (autonomousRoute == 0) {
-        // Testing purposes only
+        // Route 0: Testing purposes only
         Drivetrain.driveFor(24, inches);
     } else if (autonomousRoute == 1) {
+        // Route 1: The right side (simple route)
         piston.set(false);
         Drivetrain.driveFor(-30, inches);
         piston.set(true);
@@ -128,6 +123,7 @@ void autonomous(void) {
         Drivetrain.setTimeout(2800, msec);
         Drivetrain.driveFor(42, inches);
     } else if (autonomousRoute == 2) {
+        // Route 1: The left side (complex route)
         piston.set(false);
         Drivetrain.driveFor(-30, inches);
         piston.set(true);
@@ -157,6 +153,7 @@ void autonomous(void) {
         Drivetrain.setTimeout(1, seconds);
         Drivetrain.driveFor(14, inches);
     } else {
+        // Default case if not in range
         Brain.Screen.print("No autonomous route found");
     }
 
@@ -248,7 +245,7 @@ void controlIntakeAndConveyor() {
             conveyorActive = true;
         } else
             conveyorActive = false;
-            
+
         // Handle individual intake control
         if (Controller.ButtonX.pressing()) {
             intake.spin(forward);
