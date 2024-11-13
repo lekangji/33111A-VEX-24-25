@@ -28,6 +28,7 @@ motor_group leftDriveSmart = motor_group(leftMotorFront, leftMotorBack);
 motor rightMotorFront = motor(PORT9, ratio18_1, false);
 motor rightMotorBack = motor(PORT10, ratio18_1, false);
 motor_group rightDriveSmart = motor_group(rightMotorFront, rightMotorBack);
+motor sweeperArm = motor(PORT12,ratio18_1, false);
 // left motor, right motor, wheelTravel (circumfrence of wheels), trackWith, wheelBase, units, gearRatio
 drivetrain Drivetrain = drivetrain(leftDriveSmart, rightDriveSmart, 259.34, 320, 230, mm, 2);
 
@@ -71,6 +72,9 @@ void initalize(void) {
     intake.setVelocity(100, percent);
     intake.setMaxTorque(100, percent);
     intake.setStopping(coast);
+    sweeperArm.setVelocity(50, percent);
+    sweeperArm.setMaxTorque(50, percent);
+    sweeperArm.setStopping(brake);
 
     Brain.Screen.setFont(mono30);
 }
@@ -264,6 +268,16 @@ void controlIntakeAndConveyor() {
         intake.stop();
 }
 
+void controlSweeperArm() {
+    if (Controller.ButtonRight.pressing()) {
+        sweeperArm.spin(forward);
+    } else if (Controller.ButtonLeft.pressing()) {
+        sweeperArm.spin(reverse);
+    } else {
+        sweeperArm.stop();
+    }
+}
+
 /**
  * Continuously checks the conveyor's velocity and current,
  * and triggers the controller to rumble if the conveyor is stuck.
@@ -302,6 +316,7 @@ int controllerLoop() {
         controlDrivetrain();
         controlIntakeAndConveyor();
         controlPiston();
+        controlSweeperArm();
         wait(20, msec);
     }
 }
@@ -368,3 +383,4 @@ int main() {
         wait(1000, msec);
     }
 }
+
