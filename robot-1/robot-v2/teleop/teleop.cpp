@@ -25,14 +25,15 @@ controller Controller = controller(primary);
 motor leftMotorFront = motor(PORT1, ratio18_1, true);
 motor leftMotorBack = motor(PORT2, ratio18_1, true);
 motor_group leftDriveSmart = motor_group(leftMotorFront, leftMotorBack);
-motor rightMotorFront = motor(PORT9, ratio18_1, false);
-motor rightMotorBack = motor(PORT10, ratio18_1, false);
+motor rightMotorFront = motor(PORT3, ratio18_1, false);
+motor rightMotorBack = motor(PORT14, ratio18_1, false);
 motor_group rightDriveSmart = motor_group(rightMotorFront, rightMotorBack);
-motor sweeperArm = motor(PORT12,ratio18_1, false);
+motor wallStakeArm = motor(PORT12, ratio18_1, false);
+motor sweeperArm = motor(PORT13, ratio18_1, false);
 // left motor, right motor, wheelTravel (circumfrence of wheels), trackWith, wheelBase, units, gearRatio
 drivetrain Drivetrain = drivetrain(leftDriveSmart, rightDriveSmart, 259.34, 320, 230, mm, 2);
 
-motor conveyor = motor(PORT3, ratio18_1, true);
+motor conveyor = motor(PORT6, ratio18_1, true);
 motor intake = motor(PORT11, ratio18_1, true);
 
 digital_out piston = digital_out(Brain.ThreeWirePort.A);
@@ -44,11 +45,13 @@ bool infoCodeEnabled = false;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 2;  // 0 = testing, 1 = simple, 2 = complex
+unsigned short autonomousRoute = 2;  // 0 = testing, 1 = simple, 2 = complex, 3 = do nothing
 short autonomousColor = -1;          // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
-unsigned short drivetrainMode = 0;
+unsigned short drivetrainMode = 0; // 0 = tank, 1 = arcade
+unsigned short wallStakeArmPos = 0; // 0 = resting state, 1 =  enabled state
+unsigned short previousWallStakeArmPos;
 bool conveyorActive = false;
 bool intakeActive = false;
 bool drivetrainLNeedsToBeStopped = true;
@@ -72,8 +75,11 @@ void initalize(void) {
     intake.setVelocity(100, percent);
     intake.setMaxTorque(100, percent);
     intake.setStopping(coast);
-    sweeperArm.setVelocity(50, percent);
-    sweeperArm.setMaxTorque(50, percent);
+    wallStakeArm.setVelocity(50, percent);
+    wallStakeArm.setMaxTorque(100, percent);
+    wallStakeArm.setStopping(brake);
+    sweeperArm.setVelocity(25, percent);
+    sweeperArm.setMaxTorque(100, percent);
     sweeperArm.setStopping(brake);
 
     Brain.Screen.setFont(mono30);
@@ -156,6 +162,8 @@ void autonomous(void) {
         Drivetrain.turnFor(75 * autonomousColor, degrees);
         Drivetrain.setTimeout(1, seconds);
         Drivetrain.driveFor(14, inches);
+    } else if (autonomousRoute == 3) {
+        wait(15,seconds);
     } else {
         // Default case if not in range
         Brain.Screen.print("No autonomous route found");
@@ -240,25 +248,8 @@ void controlIntakeAndConveyor() {
         conveyorActive = true;
         intakeActive = true;
     } else {
-        // Handle individual conveyor control
-        if (Controller.ButtonUp.pressing()) {
-            conveyor.spin(forward);
-            conveyorActive = true;
-        } else if (Controller.ButtonDown.pressing()) {
-            conveyor.spin(reverse);
-            conveyorActive = true;
-        } else
-            conveyorActive = false;
-
-        // Handle individual intake control
-        if (Controller.ButtonX.pressing()) {
-            intake.spin(forward);
-            intakeActive = true;
-        } else if (Controller.ButtonB.pressing()) {
-            intake.spin(reverse);
-            intakeActive = true;
-        } else
-            intakeActive = false;
+        intakeActive = false;
+        conveyorActive = false;
     }
 
     // Stop conveyor and intake if no active command
@@ -266,6 +257,18 @@ void controlIntakeAndConveyor() {
         conveyor.stop();
     if (!intakeActive)
         intake.stop();
+}
+
+void controlWallStakeArmManually() {
+    if (Controller.ButtonX.pressing()) {
+        wallStakeArm.spin(forward);
+    } else if (Controller.ButtonB.pressing()) {
+        wallStakeArm.spin(reverse);
+    } else {
+        wallStakeArm.stop();
+    }
+
+    wait(20, msec);
 }
 
 void controlSweeperArm() {
@@ -317,6 +320,7 @@ int controllerLoop() {
         controlIntakeAndConveyor();
         controlPiston();
         controlSweeperArm();
+        controlWallStakeArmManually();
         wait(20, msec);
     }
 }
@@ -383,4 +387,3 @@ int main() {
         wait(1000, msec);
     }
 }
-
