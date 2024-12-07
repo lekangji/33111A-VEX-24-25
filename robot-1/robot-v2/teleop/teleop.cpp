@@ -34,7 +34,6 @@ motor sweeperArm = motor(PORT13, ratio18_1, false);
 drivetrain Drivetrain = drivetrain(leftDriveSmart, rightDriveSmart, 259.34, 320, 230, mm, 2);
 
 motor conveyor = motor(PORT6, ratio18_1, true);
-motor intake = motor(PORT11, ratio18_1, true);
 
 digital_out piston = digital_out(Brain.ThreeWirePort.A);
 
@@ -49,11 +48,10 @@ unsigned short autonomousRoute = 2;  // 0 = testing, 1 = simple, 2 = complex, 3 
 short autonomousColor = -1;          // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
-unsigned short drivetrainMode = 0; // 0 = tank, 1 = arcade
-unsigned short wallStakeArmPos = 0; // 0 = resting state, 1 =  enabled state
+unsigned short drivetrainMode = 0;   // 0 = tank, 1 = arcade
+unsigned short wallStakeArmPos = 0;  // 0 = resting state, 1 =  enabled state
 unsigned short previousWallStakeArmPos;
 bool conveyorActive = false;
-bool intakeActive = false;
 bool drivetrainLNeedsToBeStopped = true;
 bool drivetrainRNeedsToBeStopped = true;
 bool pistonState = false;
@@ -72,9 +70,6 @@ void initalize(void) {
     conveyor.setVelocity(100, percent);
     conveyor.setMaxTorque(100, percent);
     conveyor.setStopping(coast);
-    intake.setVelocity(100, percent);
-    intake.setMaxTorque(100, percent);
-    intake.setStopping(coast);
     wallStakeArm.setVelocity(50, percent);
     wallStakeArm.setMaxTorque(100, percent);
     wallStakeArm.setStopping(brake);
@@ -163,7 +158,7 @@ void autonomous(void) {
         Drivetrain.setTimeout(1, seconds);
         Drivetrain.driveFor(14, inches);
     } else if (autonomousRoute == 3) {
-        wait(15,seconds);
+        wait(15, seconds);
     } else {
         // Default case if not in range
         Brain.Screen.print("No autonomous route found");
@@ -179,7 +174,7 @@ void controlDrivetrain() {
     bool currentButtonStateDrive = Controller.ButtonY.pressing();
     int drivetrainLeftSideSpeed = 0, drivetrainRightSideSpeed = 0;
     if (currentButtonStateDrive && !lastButtonStateDrive)  // Detect button press
-        drivetrainMode = (drivetrainMode + 1) % 2;    
+        drivetrainMode = (drivetrainMode + 1) % 2;
     if (drivetrainMode == 0) {
         drivetrainLeftSideSpeed = Controller.Axis3.position();
         drivetrainRightSideSpeed = Controller.Axis2.position();
@@ -224,14 +219,12 @@ void controlPiston() {
 }
 
 /**
- * Handles the control of the intake and conveyor motors based on the controller's input.
+ * Handles the control of the conveyor motors based on the controller's input.
  *
- * If R1 is pressed, the intake and conveyor motors spin forward.
- * If R2 is pressed, the intake and conveyor motors spin reverse.
+ * If R1 is pressed, the conveyor motors spin forward.
+ * If R2 is pressed, the conveyor motors spin reverse.
  * If the Up button is pressed, the conveyor motor spins forward.
  * If the Down button is pressed, the conveyor motor spins reverse.
- * If the X button is pressed, the intake motor spins forward.
- * If the B button is pressed, the intake motor spins reverse.
  *
  * Otherwise, the motors will stop if they are not already stopped.
  */
@@ -239,17 +232,20 @@ void controlIntakeAndConveyor() {
     // Handle intake and conveyor control
     if (Controller.ButtonR1.pressing()) {
         conveyor.spin(forward);
-        intake.spin(forward);
         conveyorActive = true;
-        intakeActive = true;
     } else if (Controller.ButtonR2.pressing()) {
         conveyor.spin(reverse);
-        intake.spin(reverse);
         conveyorActive = true;
-        intakeActive = true;
     } else {
-        intakeActive = false;
-        conveyorActive = false;
+        // Handle individual conveyor control
+        if (Controller.ButtonUp.pressing()) {
+            conveyor.spin(forward);
+            conveyorActive = true;
+        } else if (Controller.ButtonDown.pressing()) {
+            conveyor.spin(reverse);
+            conveyorActive = true;
+        } else
+            conveyorActive = false;
     }
 
     // Stop conveyor and intake if no active command
@@ -259,50 +255,38 @@ void controlIntakeAndConveyor() {
         intake.stop();
 }
 
+/**
+ * Handles the control of the wall stake arm based on the controller's input.
+ *
+ * If the X button is pressed, the wall stake arm spins forward.
+ * If the B button is pressed, the wall stake arm spins reverse.
+ *
+ * Otherwise, the wall stake arm will stop if it is not already stopped.
+ */
 void controlWallStakeArmManually() {
-    if (Controller.ButtonX.pressing()) {
+    if (Controller.ButtonX.pressing())
         wallStakeArm.spin(forward);
-    } else if (Controller.ButtonB.pressing()) {
+    else if (Controller.ButtonB.pressing())
         wallStakeArm.spin(reverse);
-    } else {
+    else
         wallStakeArm.stop();
-    }
-
-    wait(20, msec);
-}
-
-void controlSweeperArm() {
-    if (Controller.ButtonRight.pressing()) {
-        sweeperArm.spin(forward);
-    } else if (Controller.ButtonLeft.pressing()) {
-        sweeperArm.spin(reverse);
-    } else {
-        sweeperArm.stop();
-    }
 }
 
 /**
- * Continuously checks the conveyor's velocity and current,
- * and triggers the controller to rumble if the conveyor is stuck.
+ * Handles the control of the sweeper arm based on the controller's input.
  *
- * @return 0 if stuckHelperCodeEnabled is false
+ * If the Right button is pressed, the sweeper arm spins forward.
+ * If the Left button is pressed, the sweeper arm spins reverse.
+ *
+ * Otherwise, the sweeper arm will stop if it is not already stopped.
  */
-int stuckHelperLoop() {
-    if (!stuckHelperCodeEnabled)
-        return 0;
-
-    bool alreadyRumbled = false;
-    while (true) {
-        if (((conveyor.velocity(rpm) < 20 && conveyor.current() > 5) || (intake.velocity(rpm) < 20 && intake.current() > 5)) && !alreadyRumbled) {
-            Controller.rumble(".");
-            alreadyRumbled = true;
-        } else
-            alreadyRumbled = false;
-
-        // if too high current and too low velocity, stop
-        wait(20, msec);
-    }
-    return 0;
+void controlSweeperArm() {
+    if (Controller.ButtonRight.pressing())
+        sweeperArm.spin(forward);
+    else if (Controller.ButtonLeft.pressing())
+        sweeperArm.spin(reverse);
+    else
+        sweeperArm.stop();
 }
 
 /**
@@ -323,6 +307,30 @@ int controllerLoop() {
         controlWallStakeArmManually();
         wait(20, msec);
     }
+}
+
+/**
+ * Continuously checks the conveyor's velocity and current,
+ * and triggers the controller to rumble if the conveyor is stuck.
+ *
+ * @return 0 if stuckHelperCodeEnabled is false
+ */
+int stuckHelperLoop() {
+    if (!stuckHelperCodeEnabled)
+        return 0;
+
+    bool alreadyRumbled = false;
+    while (true) {
+        if ((conveyor.velocity(rpm) < 20 && conveyor.current() > 5) && !alreadyRumbled) {
+            Controller.rumble(".");
+            alreadyRumbled = true;
+        } else
+            alreadyRumbled = false;
+
+        // if too high current and too low velocity, stop
+        wait(20, msec);
+    }
+    return 0;
 }
 
 /**
