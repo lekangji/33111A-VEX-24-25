@@ -38,6 +38,8 @@ motor intake = motor(PORT11, ratio18_1, true);
 
 digital_out piston = digital_out(Brain.ThreeWirePort.A);
 
+inertial Inertial = inertial(PORT16);
+
 // Variables that enable/disable sections of code
 bool teleopCodeEnabled = true;
 bool stuckHelperCodeEnabled = false;
@@ -81,6 +83,12 @@ void initalize(void) {
     sweeperArm.setVelocity(25, percent);
     sweeperArm.setMaxTorque(100, percent);
     sweeperArm.setStopping(brake);
+
+    Inertial.calibrate();
+    while (Inertial.isCalibrating()) {
+        wait(100, msec);
+    }
+
 
     Brain.Screen.setFont(mono30);
 }
@@ -411,8 +419,62 @@ int main() {
     Competition.autonomous(autonomous);
     Competition.drivercontrol(driverControl);
 
-    // Prevent main from exiting with an infinite loop.
+    // Prevent main from exiting with an infinite loop + gyro stuff.
+    Brain.Screen.setFont(mono12);
     while (true) {
-        wait(1000, msec);
+        Brain.Screen.clearScreen();
+        Brain.Screen.setCursor(0, 0);
+
+        double angle = Inertial.angle();
+        Brain.Screen.print("Angle: ");
+        Brain.Screen.print(angle);
+        Brain.Screen.newLine();
+
+        double roll = Inertial.roll();
+        Brain.Screen.print("Roll: ");
+        Brain.Screen.print(roll);
+        Brain.Screen.newLine();
+
+        double pitch = Inertial.pitch();
+        Brain.Screen.print("Pitch: ");
+        Brain.Screen.print(pitch);
+        Brain.Screen.newLine();
+
+        double yaw = Inertial.yaw();
+        Brain.Screen.print("Yaw: ");
+        Brain.Screen.print(yaw);
+        Brain.Screen.newLine();
+
+        double gyroRateX = Inertial.gyroRate(xaxis, rpm);
+        Brain.Screen.print("Gyro Rate X: ");
+        Brain.Screen.print(gyroRateX);
+        Brain.Screen.newLine();
+
+        double gyroRateY = Inertial.gyroRate(yaxis, rpm);
+        Brain.Screen.print("Gyro Rate Y: ");
+        Brain.Screen.print(gyroRateY);
+        Brain.Screen.newLine();
+
+        double gyroRateZ = Inertial.gyroRate(zaxis, rpm);
+        Brain.Screen.print("Gyro Rate Z: ");
+        Brain.Screen.print(gyroRateZ);
+        Brain.Screen.newLine();
+
+        double accelX = Inertial.acceleration(xaxis);
+        Brain.Screen.print("Acceleration X: ");
+        Brain.Screen.print(accelX);
+        Brain.Screen.newLine();
+
+        double accelY = Inertial.acceleration(yaxis);
+        Brain.Screen.print("Acceleration Y: ");
+        Brain.Screen.print(accelY);
+        Brain.Screen.newLine();
+
+        double accelZ = Inertial.acceleration(zaxis);
+        Brain.Screen.print("Acceleration Z: ");
+        Brain.Screen.print(accelZ);
+        Brain.Screen.newLine();
+
+        wait(50, msec);
     }
 }
