@@ -43,7 +43,8 @@ inertial Inertial = inertial(PORT16);
 // Variables that enable/disable sections of code
 bool teleopCodeEnabled = true;
 bool stuckHelperCodeEnabled = false;
-bool infoCodeEnabled = false;
+bool infoCodeEnabled = true;
+bool drivetrainSwitchEnabled = false;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
@@ -52,8 +53,7 @@ short autonomousColor = -1;          // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
 unsigned short drivetrainMode = 0;   // 0 = tank, 1 = arcade
-unsigned short wallStakeArmPos = 0;  // 0 = resting state, 1 =  enabled state
-unsigned short previousWallStakeArmPos;
+
 bool conveyorActive = false;
 bool intakeActive = false;
 bool drivetrainLNeedsToBeStopped = true;
@@ -89,8 +89,7 @@ void initalize(void) {
         wait(100, msec);
     }
 
-
-    Brain.Screen.setFont(mono30);
+    Brain.Screen.setFont(mono12);
 }
 
 /**
@@ -183,19 +182,21 @@ void autonomous(void) {
 
 void controlDrivetrain() {
     // Function to handle drivetrain control type
-    static bool lastButtonStateDrive = true;  // Track the previous state of the button
-    bool currentButtonStateDrive = Controller.ButtonY.pressing();
-    int drivetrainLeftSideSpeed = 0, drivetrainRightSideSpeed = 0;
-    if (currentButtonStateDrive && !lastButtonStateDrive)  // Detect button press
-        drivetrainMode = (drivetrainMode + 1) % 2;
-    if (drivetrainMode == 0) {
-        drivetrainLeftSideSpeed = Controller.Axis3.position();
-        drivetrainRightSideSpeed = Controller.Axis2.position();
-    } else if (drivetrainMode == 1) {
-        drivetrainLeftSideSpeed = Controller.Axis3.position() + Controller.Axis1.position();
-        drivetrainRightSideSpeed = Controller.Axis3.position() - Controller.Axis1.position();
+    if (drivetrainSwitchEnabled) {
+        static bool lastButtonStateDrive = true;  // Track the previous state of the button
+        bool currentButtonStateDrive = Controller.ButtonY.pressing();
+        int drivetrainLeftSideSpeed = 0, drivetrainRightSideSpeed = 0;
+        if (currentButtonStateDrive && !lastButtonStateDrive)  // Detect button press
+            drivetrainMode = (drivetrainMode + 1) % 2;
+        if (drivetrainMode == 0) {
+            drivetrainLeftSideSpeed = Controller.Axis3.position();
+            drivetrainRightSideSpeed = Controller.Axis2.position();
+        } else if (drivetrainMode == 1) {
+            drivetrainLeftSideSpeed = Controller.Axis3.position() + Controller.Axis1.position();
+            drivetrainRightSideSpeed = Controller.Axis3.position() - Controller.Axis1.position();
+        }
+        lastButtonStateDrive = currentButtonStateDrive;  // Update the previous state
     }
-    lastButtonStateDrive = currentButtonStateDrive;  // Update the previous state
 
     auto handleMotorControl = [](motor_group& motorGroup, int speed, bool& motorNeedsToBeStopped) {
         if (abs(speed) < 5) {
@@ -381,13 +382,26 @@ int infoLoop() {
             static_cast<double>(Brain.Battery.current()),
             static_cast<double>(Brain.Battery.temperature()),
             static_cast<double>(Drivetrain.efficiency()),
-            static_cast<double>(Drivetrain.torque())};
+            static_cast<double>(Drivetrain.torque()),
+            static_cast<double>(Inertial.angle()),
+            static_cast<double>(Inertial.roll()),
+            static_cast<double>(Inertial.pitch()),
+            static_cast<double>(Inertial.yaw()),
+            static_cast<double>(Inertial.gyroRate(xaxis, rpm)),
+            static_cast<double>(Inertial.gyroRate(yaxis, rpm)),
+            static_cast<double>(Inertial.gyroRate(zaxis, rpm)),
+            static_cast<double>(Inertial.acceleration(xaxis)),
+            static_cast<double>(Inertial.acceleration(yaxis)),
+            static_cast<double>(Inertial.acceleration(zaxis))
+        };
 
         // Iterate over the array and print each value
         for (double info : infoToPrint) {
             Brain.Screen.print(info);
             Brain.Screen.newLine();
         }
+
+        Brain.Screen.render();
 
         wait(200, msec);  // Give some delay
     }
@@ -419,62 +433,8 @@ int main() {
     Competition.autonomous(autonomous);
     Competition.drivercontrol(driverControl);
 
-    // Prevent main from exiting with an infinite loop + gyro stuff.
-    Brain.Screen.setFont(mono12);
+    // Prevent main from exiting with an infinite loop
     while (true) {
-        Brain.Screen.clearScreen();
-        Brain.Screen.setCursor(0, 0);
-
-        double angle = Inertial.angle();
-        Brain.Screen.print("Angle: ");
-        Brain.Screen.print(angle);
-        Brain.Screen.newLine();
-
-        double roll = Inertial.roll();
-        Brain.Screen.print("Roll: ");
-        Brain.Screen.print(roll);
-        Brain.Screen.newLine();
-
-        double pitch = Inertial.pitch();
-        Brain.Screen.print("Pitch: ");
-        Brain.Screen.print(pitch);
-        Brain.Screen.newLine();
-
-        double yaw = Inertial.yaw();
-        Brain.Screen.print("Yaw: ");
-        Brain.Screen.print(yaw);
-        Brain.Screen.newLine();
-
-        double gyroRateX = Inertial.gyroRate(xaxis, rpm);
-        Brain.Screen.print("Gyro Rate X: ");
-        Brain.Screen.print(gyroRateX);
-        Brain.Screen.newLine();
-
-        double gyroRateY = Inertial.gyroRate(yaxis, rpm);
-        Brain.Screen.print("Gyro Rate Y: ");
-        Brain.Screen.print(gyroRateY);
-        Brain.Screen.newLine();
-
-        double gyroRateZ = Inertial.gyroRate(zaxis, rpm);
-        Brain.Screen.print("Gyro Rate Z: ");
-        Brain.Screen.print(gyroRateZ);
-        Brain.Screen.newLine();
-
-        double accelX = Inertial.acceleration(xaxis);
-        Brain.Screen.print("Acceleration X: ");
-        Brain.Screen.print(accelX);
-        Brain.Screen.newLine();
-
-        double accelY = Inertial.acceleration(yaxis);
-        Brain.Screen.print("Acceleration Y: ");
-        Brain.Screen.print(accelY);
-        Brain.Screen.newLine();
-
-        double accelZ = Inertial.acceleration(zaxis);
-        Brain.Screen.print("Acceleration Z: ");
-        Brain.Screen.print(accelZ);
-        Brain.Screen.newLine();
-
-        wait(50, msec);
+        wait(1000, msec);
     }
 }
