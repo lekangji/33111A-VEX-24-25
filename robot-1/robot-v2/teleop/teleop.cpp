@@ -30,15 +30,16 @@ motor rightMotorBack = motor(PORT4, ratio18_1, false);
 motor_group rightDriveSmart = motor_group(rightMotorFront, rightMotorBack);
 motor wallStakeArm = motor(PORT12, ratio18_1, false);
 motor sweeperArm = motor(PORT13, ratio18_1, false);
-// left motor, right motor, wheelTravel (circumfrence of wheels), trackWith, wheelBase, units, gearRatio
-drivetrain Drivetrain = drivetrain(leftDriveSmart, rightDriveSmart, 259.34, 320, 230, mm, 2);
+
+inertial Inertial = inertial(PORT16);
+
+// left motor, right motor, wheelTravel (circumfrence of wheels), drivetrainInertial, trackWidth, wheelBase, units, gearRatio
+smartdrive Drivetrain = smartdrive(leftDriveSmart, rightDriveSmart, Inertial, 259.34, 320, 230, mm, 2);
 
 motor conveyor = motor(PORT6, ratio18_1, true);
 motor intake = motor(PORT11, ratio18_1, true);
 
 digital_out piston = digital_out(Brain.ThreeWirePort.A);
-
-inertial Inertial = inertial(PORT16);
 
 // Variables that enable/disable sections of code
 bool teleopCodeEnabled = true;
@@ -48,11 +49,11 @@ bool drivetrainSwitchEnabled = false;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 2;  // 0 = testing, 1 = simple, 2 = complex, 3 = do nothing
+unsigned short autonomousRoute = 1;  // 0 = testing, 1 = simple, 2 = complex, 3 = do nothing
 short autonomousColor = -1;          // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
-unsigned short drivetrainMode = 0;   // 0 = tank, 1 = arcade
+unsigned short drivetrainMode = 0;  // 0 = tank, 1 = arcade
 
 bool conveyorActive = false;
 bool intakeActive = false;
@@ -66,7 +67,7 @@ bool pistonState = false;
  *
  * @return None
  */
-void initalize(void) {
+void initalize(bool onlyMotors=false) {
     // All activities that occur before the competition starts.
     Drivetrain.setDriveVelocity(100, percent);
     Drivetrain.setTurnVelocity(100, percent);
@@ -83,6 +84,8 @@ void initalize(void) {
     sweeperArm.setVelocity(25, percent);
     sweeperArm.setMaxTorque(100, percent);
     sweeperArm.setStopping(brake);
+
+    if (onlyMotors) return;
 
     Inertial.calibrate();
     while (Inertial.isCalibrating()) {
@@ -107,6 +110,7 @@ void autonomous(void) {
     Drivetrain.setStopping(brake);
     Drivetrain.setDriveVelocity(80, percent);
     Drivetrain.setTurnVelocity(40, percent);
+    conveyor.setVelocity(80, percent);
 
     // Create a map with route numbers as keys and commands as values (vector of strings)
     // std::unordered_map<int, std::vector<std::string>> robotCommands;
@@ -120,24 +124,26 @@ void autonomous(void) {
     if (autonomousRoute == 0) {
         // Route 0: Testing purposes only
         Drivetrain.driveFor(24, inches);
+        Drivetrain.turnFor(90, degrees);
     } else if (autonomousRoute == 1) {
         // Route 1: The right side (simple route)
         piston.set(false);
-        Drivetrain.driveFor(-30, inches);
+        Drivetrain.driveFor(-34, inches);
         piston.set(true);
         wait(250, msec);
-        Drivetrain.setTimeout(1500, msec);
-        Drivetrain.turnFor(-68 * autonomousColor, degrees);
-        wait(100, msec);
-        intake.spin(forward);
         conveyor.spin(forward);
-        Drivetrain.setTimeout(1500, msec);
-        Drivetrain.driveFor(26, inches);
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.turnFor(-96 * autonomousColor, degrees);
+        intake.spin(forward);
+        wait(100, msec);
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.driveFor(28, inches);
         wait(300, msec);
-        Drivetrain.turnFor(-118 * autonomousColor, degrees);
+        Drivetrain.setTimeout(5000, msec);
+        Drivetrain.turnFor(-175 * autonomousColor, degrees);
         wait(100, msec);
         intake.stop();
-        Drivetrain.setTimeout(2800, msec);
+        Drivetrain.setTimeout(3400, msec);
         Drivetrain.driveFor(42, inches);
     } else if (autonomousRoute == 2) {
         // Route 1: The left side (complex route)
@@ -182,20 +188,23 @@ void autonomous(void) {
 
 void controlDrivetrain() {
     // Function to handle drivetrain control type
+    int drivetrainLeftSideSpeed = 0, drivetrainRightSideSpeed = 0;
+
     if (drivetrainSwitchEnabled) {
         static bool lastButtonStateDrive = true;  // Track the previous state of the button
         bool currentButtonStateDrive = Controller.ButtonY.pressing();
-        int drivetrainLeftSideSpeed = 0, drivetrainRightSideSpeed = 0;
+        
         if (currentButtonStateDrive && !lastButtonStateDrive)  // Detect button press
-            drivetrainMode = (drivetrainMode + 1) % 2;
-        if (drivetrainMode == 0) {
-            drivetrainLeftSideSpeed = Controller.Axis3.position();
-            drivetrainRightSideSpeed = Controller.Axis2.position();
-        } else if (drivetrainMode == 1) {
-            drivetrainLeftSideSpeed = Controller.Axis3.position() + Controller.Axis1.position();
-            drivetrainRightSideSpeed = Controller.Axis3.position() - Controller.Axis1.position();
-        }
-        lastButtonStateDrive = currentButtonStateDrive;  // Update the previous state
+            drivetrainMode = (drivetrainMode + 1) % 2;         // Toggle the drivetrain mode
+        lastButtonStateDrive = currentButtonStateDrive;        // Update the previous state
+    }
+
+    if (drivetrainMode == 0) {
+        drivetrainLeftSideSpeed = Controller.Axis3.position();
+        drivetrainRightSideSpeed = Controller.Axis2.position();
+    } else if (drivetrainMode == 1) {
+        drivetrainLeftSideSpeed = Controller.Axis3.position() + Controller.Axis1.position();
+        drivetrainRightSideSpeed = Controller.Axis3.position() - Controller.Axis1.position();
     }
 
     auto handleMotorControl = [](motor_group& motorGroup, int speed, bool& motorNeedsToBeStopped) {
@@ -392,7 +401,7 @@ int infoLoop() {
             static_cast<double>(Inertial.gyroRate(zaxis, rpm)),
             static_cast<double>(Inertial.acceleration(xaxis)),
             static_cast<double>(Inertial.acceleration(yaxis)),
-            static_cast<double>(Inertial.acceleration(zaxis))
+            static_cast<double>(Inertial.acceleration(zaxis)),
         };
 
         // Iterate over the array and print each value
@@ -432,6 +441,8 @@ int main() {
     // Set up callbacks for autonomous and driver control periods.
     Competition.autonomous(autonomous);
     Competition.drivercontrol(driverControl);
+
+    initalize(true);  // Only initialize motors
 
     // Prevent main from exiting with an infinite loop
     while (true) {
