@@ -43,9 +43,9 @@ digital_out piston = digital_out(Brain.ThreeWirePort.A);
 
 // Variables that enable/disable sections of code
 bool teleopCodeEnabled = true;
-bool stuckHelperCodeEnabled = false;
+bool stuckHelperCodeEnabled = true;
 bool infoCodeEnabled = true;
-bool drivetrainSwitchEnabled = false;
+bool drivetrainSwitchEnabled = true;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
@@ -53,13 +53,29 @@ unsigned short autonomousRoute = 1;  // 0 = testing, 1 = simple, 2 = complex, 3 
 short autonomousColor = -1;          // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
-unsigned short drivetrainMode = 0;  // 0 = tank, 1 = arcade
 
+// Drivetrain variables
+enum DrivetrainMode {
+    TANK,
+    ARCADE
+};
+DrivetrainMode drivetrainMode = TANK;
+
+// Stuck helper variables
+const unsigned short conveyorStuckLimit = 10;
+const float conveyorStuckCurrent = 2;
+const unsigned short conveyorStuckVelocity = 5;
+const unsigned short intakeStuckLimit = 10;
+const float intakeStuckCurrent = 2;
+const unsigned short intakeStuckVelocity = 5;
+
+// Control variables
 bool conveyorActive = false;
 bool intakeActive = false;
 bool drivetrainLNeedsToBeStopped = true;
 bool drivetrainRNeedsToBeStopped = true;
 bool pistonState = false;
+
 
 /**
  * Initializes the robot's systems before the competition starts.
@@ -67,7 +83,7 @@ bool pistonState = false;
  *
  * @return None
  */
-void initalize(bool onlyMotors=false) {
+void initalize(bool onlyMotors = false) {
     // All activities that occur before the competition starts.
     Drivetrain.setDriveVelocity(100, percent);
     Drivetrain.setTurnVelocity(100, percent);
@@ -192,17 +208,16 @@ void controlDrivetrain() {
 
     if (drivetrainSwitchEnabled) {
         static bool lastButtonStateDrive = true;  // Track the previous state of the button
-        bool currentButtonStateDrive = Controller.ButtonY.pressing();
-        
-        if (currentButtonStateDrive && !lastButtonStateDrive)  // Detect button press
-            drivetrainMode = (drivetrainMode + 1) % 2;         // Toggle the drivetrain mode
-        lastButtonStateDrive = currentButtonStateDrive;        // Update the previous state
-    }
+        bool currentButtonStateDrive = Controller.ButtonL2.pressing();
 
-    if (drivetrainMode == 0) {
+        if (currentButtonStateDrive && !lastButtonStateDrive)           // Detect button press
+            drivetrainMode = (drivetrainMode == TANK) ? ARCADE : TANK;  // Toggle the drivetrain mode
+        lastButtonStateDrive = currentButtonStateDrive;                 // Update the previous state
+    }
+    if (drivetrainMode == TANK) {
         drivetrainLeftSideSpeed = Controller.Axis3.position();
         drivetrainRightSideSpeed = Controller.Axis2.position();
-    } else if (drivetrainMode == 1) {
+    } else if (drivetrainMode == ARCADE) {
         drivetrainLeftSideSpeed = Controller.Axis3.position() + Controller.Axis1.position();
         drivetrainRightSideSpeed = Controller.Axis3.position() - Controller.Axis1.position();
     }
@@ -358,15 +373,29 @@ int stuckHelperLoop() {
     if (!stuckHelperCodeEnabled)
         return 0;
 
-    bool alreadyRumbled = false;
+    short conveyorCounter = 0;
+    short intakeCounter = 0;
     while (true) {
-        if ((conveyor.velocity(rpm) < 20 && conveyor.current() > 5) && !alreadyRumbled) {
-            Controller.rumble(".");
-            alreadyRumbled = true;
-        } else
-            alreadyRumbled = false;
+        if (conveyor.velocity(rpm) < conveyorStuckVelocity && conveyor.current() >= conveyorStuckCurrent)
+            conveyorCounter += 1;
+        else
+            conveyorCounter = 0;
+        if (intake.velocity(rpm) < intakeStuckVelocity && intake.current() >= intakeStuckCurrent)
+            intakeCounter += 1;
+        else
+            intakeCounter = 0;
 
-        // if too high current and too low velocity, stop
+        if (conveyorCounter >= conveyorStuckLimit) {
+            // conveyor.stop();
+            Controller.rumble(".");
+            conveyorCounter = 0;
+        }
+        if (intakeCounter >= intakeStuckLimit) {
+            // intake.stop();
+            Controller.rumble(".");
+            intakeCounter = 0;
+        }
+
         wait(20, msec);
     }
     return 0;
@@ -442,7 +471,7 @@ int main() {
     Competition.autonomous(autonomous);
     Competition.drivercontrol(driverControl);
 
-    initalize(true);  // Only initialize motors
+    initalize(true);  // Only reset motors
 
     // Prevent main from exiting with an infinite loop
     while (true) {
