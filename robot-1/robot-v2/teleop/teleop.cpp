@@ -88,7 +88,7 @@ void initalize(bool onlyMotors = false) {
     Drivetrain.setDriveVelocity(100, percent);
     Drivetrain.setTurnVelocity(100, percent);
     Drivetrain.setStopping(coast);
-    conveyor.setVelocity(100, percent);
+    conveyor.setVelocity(80, percent);
     conveyor.setMaxTorque(100, percent);
     conveyor.setStopping(coast);
     intake.setVelocity(100, percent);
@@ -96,10 +96,10 @@ void initalize(bool onlyMotors = false) {
     intake.setStopping(coast);
     wallStakeArm.setVelocity(50, percent);
     wallStakeArm.setMaxTorque(100, percent);
-    wallStakeArm.setStopping(brake);
+    wallStakeArm.setStopping(hold);
     sweeperArm.setVelocity(25, percent);
     sweeperArm.setMaxTorque(100, percent);
-    sweeperArm.setStopping(brake);
+    sweeperArm.setStopping(hold);
 
     if (onlyMotors) return;
 
