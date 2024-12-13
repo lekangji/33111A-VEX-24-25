@@ -40,80 +40,91 @@ motor intake = motor(PORT11, ratio18_1, true);
 
 digital_out piston = digital_out(Brain.ThreeWirePort.A);
 
+const int DEFAULT_DRIVE_VELOCITY = 85;
+const int DEFAULT_TURN_VELOCITY = 60;
+
 void resetDrive() {
-    Drivetrain.setDriveVelocity(85, percent);
-    Drivetrain.setTurnVelocity(60, percent);
+    Drivetrain.setDriveVelocity(DEFAULT_DRIVE_VELOCITY, percent);
+    Drivetrain.setTurnVelocity(DEFAULT_TURN_VELOCITY, percent);
     Drivetrain.setTimeout(0, seconds);
+}
+
+void driveFor(double distance, int timeout = 0, double speed = DEFAULT_DRIVE_VELOCITY, bool waitUntilDone = true) {
+    Drivetrain.setDriveVelocity(speed, percent);
+    Drivetrain.setTimeout(timeout, msec);
+    Drivetrain.driveFor(distance, inches, waitUntilDone);
+    resetDrive();
+}
+
+void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY, bool waitUntilDone = true) {
+    Drivetrain.setTurnVelocity(speed, percent);
+    Drivetrain.setTimeout(timeout, msec);
+    Drivetrain.turnToHeading(angle, degrees, waitUntilDone);
+    resetDrive();
 }
 
 void autonomous(void) {
     // Goal 1
     piston.set(false);
-    Drivetrain.driveFor(-8, inches);
+    driveFor(-8);
     piston.set(true);
 
     intake.spin(forward);
     conveyor.spin(forward);
-    Drivetrain.turnToHeading(-180, degrees);
+    turnTo(-180);
 
     // Reset the heading and rotation
     // Drivetrain.setHeading(0, degrees);
     // Drivetrain.setRotation(0, degrees);
 
-    Drivetrain.driveFor(30, inches);
-    Drivetrain.turnToHeading(-90, degrees);
-    Drivetrain.driveFor(26, inches);
-    Drivetrain.turnToHeading(0, degrees);
-    Drivetrain.setDriveVelocity(40, percent);  // slow
-    Drivetrain.driveFor(32, inches);
+    driveFor(30);
     wait(500, msec);
-    resetDrive();
-    Drivetrain.turnToHeading(-120, degrees);
-    Drivetrain.setTimeout(1500, msec);
-    Drivetrain.driveFor(20, inches);
-    Drivetrain.setTimeout(0, seconds);
+    turnTo(-90);
+    driveFor(26);
+    turnTo(0);
+    driveFor(32, 0, 30);  // Drive slower to allow intaking
+    wait(750, msec);
+    // Go up to the wall to intake that one red
+    turnTo(-120);
+    driveFor(20, 1500);  // Drive with timeout 1500
     wait(750, msec);
     // Place in positive corner
-    Drivetrain.turnToHeading(162, degrees);
-    Drivetrain.setTimeout(1500, msec);
-    Drivetrain.driveFor(-30, inches);
+    turnTo(162);
+    driveFor(-30, 1500);
     piston.set(false);
 
     // Goal 2
-    Drivetrain.turnToHeading(169, degrees);
-    Drivetrain.setTimeout(0, seconds);
-    Drivetrain.driveFor(82, inches);
+    turnTo(169, 1750);
+    driveFor(82);
     conveyor.stop();
-    Drivetrain.turnToHeading(-72, degrees);
+    turnTo(-72);
     intake.stop();
-    Drivetrain.driveFor(-48, inches);
+    driveFor(-48);
     piston.set(true);  // Grabbed the next goal
     conveyor.spin(forward);
     intake.spin(forward);
     wait(500, msec);
-    Drivetrain.turnToHeading(45, degrees);
-    Drivetrain.driveFor(32, inches);
+    turnTo(45);
+    driveFor(32);
     wait(500, msec);
-    Drivetrain.turnToHeading(90, degrees);
-    Drivetrain.driveFor(26, inches);
+    turnTo(90);
+    driveFor(26);
     wait(500, msec);
-    
-    Drivetrain.turnToHeading(0, degrees);
-    Drivetrain.driveFor(78, inches);
+
+    turnTo(0);
+    driveFor(78);
     wait(1, seconds);
 
     // Goal 3
-    Drivetrain.turnToHeading(90, degrees);
-    Drivetrain.driveFor(-20, inches);
-
-    piston.set(false);
-    Drivetrain.turnFor(120, degrees);
+    turnTo(90);
+    driveFor(-20);
     piston.set(true);
 
     // Todo: shove in corner
 
-    Drivetrain.turnToHeading(-135, degrees);
-    Drivetrain.driveFor(48, inches);
+    // Touch stake
+    turnTo(-135);
+    driveFor(48);
 
     return;
     Drivetrain.turnFor(135, degrees);
@@ -127,10 +138,10 @@ int main() {
     Competition.autonomous(autonomous);
 
     // Initalize some motor stuff
-    Drivetrain.setDriveVelocity(85, percent);
-    Drivetrain.setTurnVelocity(60, percent);
+    Drivetrain.setDriveVelocity(DEFAULT_DRIVE_VELOCITY, percent);
+    Drivetrain.setTurnVelocity(DEFAULT_TURN_VELOCITY, percent);
     Drivetrain.setStopping(brake);
-    conveyor.setVelocity(100, percent);
+    conveyor.setVelocity(80, percent);
     conveyor.setMaxTorque(100, percent);
     conveyor.setStopping(coast);
     intake.setVelocity(100, percent);
