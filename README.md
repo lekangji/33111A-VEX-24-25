@@ -21,6 +21,8 @@ Original (not so good) version of the robot.
 
 #### Version 2
 
+New version of robot is now hook chain.
+
 ###### Drivetrain Controller
 
 On newer versions of auton, this code will be required to be added in the same directory as the main.cpp file when building.
