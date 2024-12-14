@@ -133,13 +133,8 @@ void autonomous(void) {
     Drivetrain.setTurnVelocity(40, percent);
     conveyor.setVelocity(80, percent);
 
-    // Create a map with route numbers as keys and commands as values (vector of strings)
-    // std::unordered_map<int, std::vector<std::string>> robotCommands;
-
-    // Adding commands to the map for different routes
-    // robotCommands[1] = { "Drivetrain.driveFor", "10" }; // command and a distance
-    // robotCommands[2] = { "Drivetrain.turnFor", "90" };
-    // robotCommands[3] = { "Drivetrain.turnFor", "3 seconds" };
+    wallStakeArm.setPosition(0, degrees);
+    wallStakeArm.spinToPosition(startWallStakeArmPosition, degrees, true);
 
     // Autonomous
     if (autonomousRoute == 0) {
@@ -161,7 +156,7 @@ void autonomous(void) {
         Drivetrain.driveFor(28, inches);
         wait(300, msec);
         Drivetrain.setTimeout(5000, msec);
-        Drivetrain.turnFor(-175 * autonomousColor, degrees);
+        Drivetrain.turnToHeading(-90, degrees);
         wait(100, msec);
         intake.stop();
         Drivetrain.setTimeout(3400, msec);
@@ -368,8 +363,6 @@ int teleopLoop() {
     if (!teleopCodeEnabled)
         return 0;
 
-    wallStakeArm.spinToPosition(startWallStakeArmPosition, degrees, true);
-
     // Handle controller input
     while (true) {
         controlDrivetrain();
@@ -473,6 +466,7 @@ void driverControl(void) {
     // Setup for motors (in case autonomous does not finish in time)
     Drivetrain.setTimeout(0, seconds);
     Drivetrain.setStopping(coast);
+    initalize(true);  // Only reset motors
 
     // Controller.rumble(". . . -");
 
@@ -484,12 +478,10 @@ void driverControl(void) {
 int main() {
     // Run the pre-autonomous function.
     initalize();
-
+    
     // Set up callbacks for autonomous and driver control periods.
     Competition.autonomous(autonomous);
     Competition.drivercontrol(driverControl);
-
-    initalize(true);  // Only reset motors
 
     // Prevent main from exiting with an infinite loop
     while (true) {
