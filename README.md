@@ -30,6 +30,6 @@ The code in this folder will be similar if not the same as the robot-2/robot-v1 
 High school robot
 - V1 &rarr; Hook chain robot.
 
-#### Version 1
-
 Because this robot is no longer being maintained here, the code will no longer be updated.
+
+#### Version 1
