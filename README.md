@@ -13,6 +13,8 @@ Middle school robot
 - V1 &rarr; First version of the robot. Sliding conveyor.
 - V2 &rarr; Second version. Hook chain.
 
+This folder contiains all the files needed for the functioning of the middle school robot.
+
 #### Version 2
 
 ###### Drivetrain Controller
