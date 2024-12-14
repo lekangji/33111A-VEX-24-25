@@ -12,10 +12,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// #include <unordered_map.h>
-// #include <vector.tcc>
+
 #include "vex.h"
 using namespace vex;
+
+// TODO: add auton driving functions to 15 sec auton
 
 brain Brain;
 competition Competition;
@@ -61,6 +62,15 @@ enum DrivetrainMode {
 };
 DrivetrainMode drivetrainMode = TANK;
 
+// Control variables
+bool conveyorActive = false;
+bool intakeActive = false;
+bool drivetrainLNeedsToBeStopped = true;
+bool drivetrainRNeedsToBeStopped = true;
+bool pistonState = false;
+
+// Constants
+
 // Stuck helper variables
 const unsigned short conveyorStuckLimit = 10;
 const float conveyorStuckCurrent = 2;
@@ -69,13 +79,8 @@ const unsigned short intakeStuckLimit = 10;
 const float intakeStuckCurrent = 2;
 const unsigned short intakeStuckVelocity = 5;
 
-// Control variables
-bool conveyorActive = false;
-bool intakeActive = false;
-bool drivetrainLNeedsToBeStopped = true;
-bool drivetrainRNeedsToBeStopped = true;
-bool pistonState = false;
-
+const double startWallStakeArmPosition = 260;
+const double maxWallStakeArmPosition = 660;
 
 /**
  * Initializes the robot's systems before the competition starts.
@@ -103,12 +108,12 @@ void initalize(bool onlyMotors = false) {
 
     if (onlyMotors) return;
 
+    Brain.Screen.setFont(mono12);
+    
     Inertial.calibrate();
     while (Inertial.isCalibrating()) {
         wait(100, msec);
     }
-
-    Brain.Screen.setFont(mono12);
 }
 
 /**
@@ -202,6 +207,17 @@ void autonomous(void) {
     conveyor.stop();
 }
 
+/**
+ * Handles the control of the drivetrain based on the controller's input.
+ *
+ * If the L2 button is pressed, the drivetrain control type will switch between tank and arcade.
+ * If the drivetrain is in tank mode, the left side of the drivetrain will be controlled by the left joystick's Y-axis,
+ * and the right side of the drivetrain will be controlled by the right joystick's Y-axis.
+ * If the drivetrain is in arcade mode, the left joystick's Y-axis will control the speed of both sides of the drivetrain,
+ * and the left joystick's X-axis will control the difference between the left and right side.
+ *
+ * Otherwise, the drivetrain will stop if it is not already stopped.
+ */
 void controlDrivetrain() {
     // Function to handle drivetrain control type
     int drivetrainLeftSideSpeed = 0, drivetrainRightSideSpeed = 0;
@@ -312,13 +328,13 @@ void controlIntakeAndConveyor() {
 /**
  * Handles the control of the wall stake arm based on the controller's input.
  *
- * If the A button is pressed, the wall stake arm spins forward.
+ * If the A button is pressed, the wall stake arm spins forward when the rotaiton is less than the max wall stake position.
  * If the Y button is pressed, the wall stake arm spins reverse.
  *
  * Otherwise, the wall stake arm will stop if it is not already stopped.
  */
-void controlWallStakeArmManually() {
-    if (Controller.ButtonA.pressing())
+void controlWallStakeArm() {
+    if (Controller.ButtonA.pressing() && wallStakeArm.position(degrees) < maxWallStakeArmPosition)
         wallStakeArm.spin(forward);
     else if (Controller.ButtonY.pressing())
         wallStakeArm.spin(reverse);
@@ -348,9 +364,11 @@ void controlSweeperArm() {
  *
  * @return None
  */
-int controllerLoop() {
+int teleopLoop() {
     if (!teleopCodeEnabled)
         return 0;
+
+    wallStakeArm.spinToPosition(startWallStakeArmPosition, degrees, true);
 
     // Handle controller input
     while (true) {
@@ -358,7 +376,7 @@ int controllerLoop() {
         controlIntakeAndConveyor();
         controlPiston();
         controlSweeperArm();
-        controlWallStakeArmManually();
+        controlWallStakeArm();
         wait(20, msec);
     }
 }
@@ -373,8 +391,8 @@ int stuckHelperLoop() {
     if (!stuckHelperCodeEnabled)
         return 0;
 
-    short conveyorCounter = 0;
-    short intakeCounter = 0;
+    unsigned short conveyorCounter = 0;
+    unsigned short intakeCounter = 0;
     while (true) {
         if (conveyor.velocity(rpm) < conveyorStuckVelocity && conveyor.current() >= conveyorStuckCurrent)
             conveyorCounter += 1;
@@ -458,7 +476,7 @@ void driverControl(void) {
 
     // Controller.rumble(". . . -");
 
-    task controllerTask(controllerLoop);
+    task teleopTask(teleopLoop);
     task stuckHelperTask(stuckHelperLoop);
     task infoTask(infoLoop);
 }
