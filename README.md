@@ -15,6 +15,11 @@ Middle school robot
 
 #### Version 2
 
+###### Drivetrain Controller
+
+On newer versions of auton, this code will be required to be added in the same directory as the main.cpp file when building.
+These files provide an easy way to control the drivetrain.
+
 ##### Teleop
 
 After a redesign of the robot (10/5/2024), changing it to the high school team's design, the code also had to be adapted (copied).
