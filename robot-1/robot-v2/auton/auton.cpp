@@ -64,6 +64,8 @@ void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY,
 }
 
 void autonomous(void) {
+    wallStakeArm.spinToPosition(260, degrees);
+
     // Goal 1
     piston.set(false);
     driveFor(-8);
