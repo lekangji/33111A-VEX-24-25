@@ -109,7 +109,7 @@ void initalize(bool onlyMotors = false) {
     if (onlyMotors) return;
 
     Brain.Screen.setFont(mono12);
-    
+
     Inertial.calibrate();
     while (Inertial.isCalibrating()) {
         wait(100, msec);
@@ -363,6 +363,8 @@ int teleopLoop() {
     if (!teleopCodeEnabled)
         return 0;
 
+    wallStakeArm.spinToPosition(startWallStakeArmPosition, degrees, true);
+
     // Handle controller input
     while (true) {
         controlDrivetrain();
@@ -478,7 +480,7 @@ void driverControl(void) {
 int main() {
     // Run the pre-autonomous function.
     initalize();
-    
+
     // Set up callbacks for autonomous and driver control periods.
     Competition.autonomous(autonomous);
     Competition.drivercontrol(driverControl);
