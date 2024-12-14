@@ -23,6 +23,10 @@ Original (not so good) version of the robot.
 
 New version of robot is now hook chain.
 
+##### Auton
+
+This auton is the skills auton that runs on this robot.
+
 ###### Drivetrain Controller
 
 On newer versions of auton, this code will be required to be added in the same directory as the main.cpp file when building.
