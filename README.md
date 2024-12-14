@@ -15,6 +15,10 @@ Middle school robot
 
 This folder contiains all the files needed for the functioning of the middle school robot.
 
+#### Version 1
+
+Original (not so good) version of the robot.
+
 #### Version 2
 
 ###### Drivetrain Controller
