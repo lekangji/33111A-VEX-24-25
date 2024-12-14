@@ -51,7 +51,7 @@ bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
 unsigned short autonomousRoute = 1;  // 0 = testing, 1 = simple, 2 = complex, 3 = do nothing
-short autonomousColor = -1;          // Let 1 be red and -1 be blue
+short autonomousColor = 1;          // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
 
@@ -156,11 +156,15 @@ void autonomous(void) {
         Drivetrain.driveFor(28, inches);
         wait(300, msec);
         Drivetrain.setTimeout(5000, msec);
-        Drivetrain.turnToHeading(-90, degrees);
+        Drivetrain.turnToHeading(90 * autonomousColor, degrees);
         wait(100, msec);
         intake.stop();
-        Drivetrain.setTimeout(3400, msec);
-        Drivetrain.driveFor(42, inches);
+        Drivetrain.setDriveVelocity(90, percent);
+        Drivetrain.setTimeout(2000, msec);
+        Drivetrain.driveFor(32, inches);
+        Drivetrain.setDriveVelocity(30, percent);
+        Drivetrain.setTimeout(2000, msec);
+        Drivetrain.driveFor(18, inches);
     } else if (autonomousRoute == 2) {
         // Route 1: The left side (complex route)
         piston.set(false);
