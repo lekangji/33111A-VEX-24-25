@@ -84,49 +84,49 @@ void autonomous(void) {
     turnTo(-90);
     driveFor(26);
     turnTo(0);
-    driveFor(32, 0, 30);  // Drive slower to allow intaking
+    driveFor(32, 5000, 30);  // Drive slower to allow intaking
     wait(750, msec);
     // Go up to the wall to intake that one red
-    turnTo(-120);
+    turnTo(-120, 2500);
     driveFor(20, 1500);  // Drive with timeout 1500
     wait(750, msec);
     // Place in positive corner
-    turnTo(162);
+    turnTo(162, 3000);
     driveFor(-30, 1500);
     piston.set(false);
 
     // Goal 2
-    turnTo(169, 1750);
+    turnTo(169, 2000);
     driveFor(82);
     conveyor.stop();
-    turnTo(-72);
+    turnTo(-72, 2000);
     intake.stop();
-    driveFor(-48);
+    driveFor(-48, 5000);
     piston.set(true);  // Grabbed the next goal
     conveyor.spin(forward);
     intake.spin(forward);
     wait(500, msec);
-    turnTo(45);
-    driveFor(32);
+    turnTo(45, 2000);
+    driveFor(32, 5000);
     wait(500, msec);
-    turnTo(90);
-    driveFor(26);
+    turnTo(90, 2000);
+    driveFor(26, 4000);
     wait(500, msec);
 
-    turnTo(0);
-    driveFor(78);
+    turnTo(0, 2500);
+    driveFor(78, 7000);
     wait(1, seconds);
 
     // Goal 3
-    turnTo(90);
-    driveFor(-20);
+    turnTo(90, 2500);
+    driveFor(-20, 2500);
     piston.set(true);
 
     // Todo: shove in corner
 
     // Touch stake
-    turnTo(-135);
-    driveFor(48);
+    turnTo(-135, 3500);
+    driveFor(48, 4000);
 
     return;
     Drivetrain.turnFor(135, degrees);
