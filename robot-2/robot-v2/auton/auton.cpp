@@ -31,8 +31,7 @@ motor wallStakeMotorLeft = motor(PORT10, ratio18_1, false);
 motor wallStakeMotorRight = motor(PORT4, ratio18_1, false);
 motor_group wallStakeArm = motor_group(wallStakeMotorLeft, wallStakeMotorRight);
 
-// Port 20 is a placeholder port, B Team doesn't have an inertial as of now
-inertial Inertial = inertial(PORT20);
+inertial Inertial = inertial(PORT9);
 
 // left motor, right motor, wheelTravel (circumfrence of wheels), drivetrainInertial, trackWidth, wheelBase, units, gearRatio
 smartdrive Drivetrain = smartdrive(leftDriveSmart, rightDriveSmart, Inertial, 239.3893602, 317.5, 228.6, mm, 2);
@@ -66,32 +65,32 @@ void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY,
     resetDrive();
 }
 
-// Degree and distance values will need to be adjusted to the new robot
+// Kinda works now
 void autonomous(void) {
-    wallStakeArm.spinToPosition(260, degrees);
+    Drivetrain.setHeading(40, degrees);
 
     // Goal 1
     pistonClamp.set(false);
-    driveFor(-8);
+    driveFor(-14);
     pistonClamp.set(true);
 
     intake.spin(forward);
     conveyor.spin(forward);
-    turnTo(-180);
+    turnTo(180);
 
     // Reset the heading and rotation
     // Drivetrain.setHeading(0, degrees);
     // Drivetrain.setRotation(0, degrees);
 
-    driveFor(30);
+    driveFor(20);
     wait(500, msec);
-    turnTo(-90);
-    driveFor(26);
+    turnTo(-85);
+    driveFor(22);
     turnTo(0);
     driveFor(32, 5000, 30);  // Drive slower to allow intaking
     wait(750, msec);
     // Go up to the wall to intake that one red
-    turnTo(-120, 2500);
+    turnTo(-130, 2500);
     driveFor(20, 1500);  // Drive with timeout 1500
     wait(750, msec);
     // Place in positive corner
@@ -100,6 +99,7 @@ void autonomous(void) {
     pistonClamp.set(false);
 
     // Goal 2
+    driveFor(2, 200);
     turnTo(169, 2000);
     driveFor(82);
     conveyor.stop();
