@@ -40,8 +40,8 @@ motor intake = motor(PORT11, ratio18_1, true);
 
 digital_out piston = digital_out(Brain.ThreeWirePort.A);
 
-const int DEFAULT_DRIVE_VELOCITY = 85;
-const int DEFAULT_TURN_VELOCITY = 60;
+const int DEFAULT_DRIVE_VELOCITY = 75;  // 80
+const int DEFAULT_TURN_VELOCITY = 50;   // 60
 
 void resetDrive() {
     Drivetrain.setDriveVelocity(DEFAULT_DRIVE_VELOCITY, percent);
@@ -66,11 +66,12 @@ void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY,
 }
 
 void autonomous(void) {
-    wallStakeArm.spinToPosition(260, degrees);  // try setting to false
+    wallStakeArm.spinFor(260, degrees, false);
+    Drivetrain.setHeading(32.26, degrees);
 
     // Goal 1
     piston.set(false);
-    driveFor(-8);
+    driveFor(-14, 2000);
     piston.set(true);
 
     intake.spin(forward);
@@ -81,21 +82,21 @@ void autonomous(void) {
     // Drivetrain.setHeading(0, degrees);
     // Drivetrain.setRotation(0, degrees);
 
-    driveFor(30);
+    driveFor(29);
     wait(500, msec);
-    turnTo(-90);
+    turnTo(-85);
     driveFor(26);
     wait(500, msec);
-    turnTo(0, 0, 40);        // Turn slower for accuracy
-    driveFor(32, 5000, 35);  // Drive slower to allow intaking
+    turnTo(0, 2500, 30);     // Turn slower for accuracy
+    driveFor(32, 5000, 30);  // Drive slower to allow intaking
     wait(750, msec);
-    printf("\033[31m====about to go to th wall====\n");
+    printf("\033[31m====about to go to the wall====\n");
     // Go up to the wall to intake that one red
     turnTo(-130, 2500);
-    driveFor(19, 1500);  // Drive with timeout 1500
+    driveFor(20, 1500);
     wait(750, msec);
 
-    printf("\033[31m====placing goal in corner (aliging with wall)====\n");
+    printf("\033[31m====placing goal in corner (aligning with wall)====\n");
     // Place in corner
     turnTo(162, 3000);
     driveFor(-30, 1500);
@@ -103,13 +104,17 @@ void autonomous(void) {
     printf("\033[31m====goal placed====\n");
 
     // Goal 2
-    turnTo(169, 2000, 30);  // Angle to correct place to pick up that ring
-    driveFor(82, 100);      // Drive to the ring (may increase distance)
-    conveyor.stop();        // Once picking it up, stop conveyor to not lose the ring
-    turnTo(-72, 2000);      // turn to goal angle
+    driveFor(2, 200);       // Get a little further from the goal
+    turnTo(169, 2500, 30);  // Angle to correct place to pick up that ring
+    printf("\033[31m====ahhhh so far away====\n");
+    driveFor(82, 8000, 100);  // Drive to the ring (may increase distance)
+    conveyor.stop();          // Once picking it up, stop conveyor to not lose the ring
+    printf("\033[31m====turn to pick up goal====\n");
+    turnTo(-72, 2000, 40);  // turn to goal angle
     intake.stop();          // Ok, now we can stop the intake
     driveFor(-48, 5000);    // Go to the next goal
-    piston.set(true);       // Grabbed the next goal
+    printf("\033[31m====grabbing goal 🙏 pls work====\n");
+    piston.set(true);  // Grabbed the next goal
 
     // Now we can start spinning
     conveyor.spin(forward);
