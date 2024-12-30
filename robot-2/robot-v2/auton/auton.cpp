@@ -65,13 +65,12 @@ void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY,
     resetDrive();
 }
 
-// Kinda works now
 void autonomous(void) {
     Drivetrain.setHeading(40, degrees);
 
     // Goal 1
     pistonClamp.set(false);
-    driveFor(-14);
+    driveFor(-14,2000);
     pistonClamp.set(true);
 
     intake.spin(forward);
@@ -82,16 +81,16 @@ void autonomous(void) {
     // Drivetrain.setHeading(0, degrees);
     // Drivetrain.setRotation(0, degrees);
 
-    driveFor(20);
+    driveFor(20,3000,30.0);
     wait(500, msec);
     turnTo(-85);
-    driveFor(22);
+    driveFor(22,3000,30.0);
     turnTo(0);
-    driveFor(32, 5000, 30);  // Drive slower to allow intaking
+    driveFor(32, 5000, 30.0);  // Drive slower to allow intaking
     wait(750, msec);
     // Go up to the wall to intake that one red
     turnTo(-130, 2500);
-    driveFor(20, 1500);  // Drive with timeout 1500
+    driveFor(17, 1500);  // Drive with timeout 1500
     wait(750, msec);
     // Place in positive corner
     turnTo(162, 3000);
@@ -101,7 +100,7 @@ void autonomous(void) {
     // Goal 2
     driveFor(2, 200);
     turnTo(169, 2000);
-    driveFor(82);
+    driveFor(88);
     conveyor.stop();
     turnTo(-72, 2000);
     intake.stop();
@@ -110,16 +109,20 @@ void autonomous(void) {
     conveyor.spin(forward);
     intake.spin(forward);
     wait(500, msec);
-    turnTo(45, 2000);
-    driveFor(32, 5000);
+    turnTo(0, 2000);
+    driveFor(16, 3000, 30.0);
     wait(500, msec);
     turnTo(90, 2000);
-    driveFor(26, 4000);
+    driveFor(24, 3000, 30.0);
+    turnTo(10, 2000);
+    driveFor(90, 7000, 60.0);
     wait(500, msec);
-
-    turnTo(0, 2500);
-    driveFor(78, 7000);
-    wait(1, seconds);
+    driveFor(-5);
+    turnTo(-90, 2000);
+    driveFor(-20, 2000);
+    pistonClamp.set(false);
+    driveFor(20, 2000);
+    return;
 
     // Goal 3
     turnTo(90, 2500);
