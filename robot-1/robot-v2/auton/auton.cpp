@@ -119,10 +119,10 @@ void autonomous(void) {
 
     wait(500, msec);
     turnTo(45, 2000);
-    driveFor(24, 5000);
+    driveFor(24, 4000);
     wait(500, msec);
     turnTo(90, 2000);
-    driveFor(28, 4000);
+    driveFor(24, 4000);
     wait(500, msec);
 
     // Drive all the way down the field
@@ -132,22 +132,20 @@ void autonomous(void) {
     wait(1, seconds);
     // Time to shove goal in corner
     printf("\033[31m====shoving goal in corner====\n");
-    turnTo(-135, 3500);
-    driveFor(-20, 2500);
+    turnTo(-135, 5000);
+    driveFor(-20, 3000);
     piston.set(false);
 
+    return;
     // Goal 3
     turnTo(90, 2500);
     driveFor(-20, 2500);
     piston.set(true);
 
-    // Todo: shove goal in corner
-
     // Touch ladder
     turnTo(-145, 3500);
     driveFor(48, 4000);
 
-    return;
     Drivetrain.turnFor(135, degrees);
     Drivetrain.driveFor(-14, inches);
     piston.set(false);
