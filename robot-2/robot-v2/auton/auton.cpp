@@ -81,10 +81,10 @@ void autonomous(void) {
     // Drivetrain.setHeading(0, degrees);
     // Drivetrain.setRotation(0, degrees);
 
-    driveFor(20,3000,30.0);
+    driveFor(20,3000,40.0);
     wait(500, msec);
     turnTo(-85);
-    driveFor(22,3000,30.0);
+    driveFor(22,3000,40.0);
     turnTo(0);
     driveFor(32, 5000, 30.0);  // Drive slower to allow intaking
     wait(750, msec);
@@ -110,12 +110,13 @@ void autonomous(void) {
     intake.spin(forward);
     wait(500, msec);
     turnTo(0, 2000);
-    driveFor(16, 3000, 30.0);
+    driveFor(16, 3000, 50.0);
     wait(500, msec);
     turnTo(90, 2000);
-    driveFor(24, 3000, 30.0);
-    turnTo(10, 2000);
-    driveFor(90, 7000, 60.0);
+    driveFor(24, 3000, 50.0);
+    turnTo(12, 2000);
+    driveFor(47, 35000, 60.0);
+    driveFor(48, 3500, 30.0);
     wait(500, msec);
     driveFor(-5);
     turnTo(-90, 2000);
@@ -128,10 +129,6 @@ void autonomous(void) {
     turnTo(90, 2500);
     driveFor(-20, 2500);
     pistonClamp.set(true);
-
-    // Todo: shove in corner
-
-    // Touch stake
     turnTo(-135, 3500);
     driveFor(48, 4000);
 
