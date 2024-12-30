@@ -87,7 +87,7 @@ void autonomous(void) {
     driveFor(32, 5000, 30);  // Drive slower to allow intaking
     wait(750, msec);
     // Go up to the wall to intake that one red
-    turnTo(-120, 2500);
+    turnTo(-130, 2500);
     driveFor(20, 1500);  // Drive with timeout 1500
     wait(750, msec);
     // Place in positive corner
@@ -124,7 +124,7 @@ void autonomous(void) {
 
     // Todo: shove in corner
 
-    // Touch stake
+    // Touch ladder
     turnTo(-135, 3500);
     driveFor(48, 4000);
 
