@@ -50,6 +50,7 @@ void resetDrive() {
 }
 
 void driveFor(double distance, int timeout = 0, double speed = DEFAULT_DRIVE_VELOCITY, bool waitUntilDone = true) {
+    printf("\033[30mIM driving\n");
     Drivetrain.setDriveVelocity(speed, percent);
     Drivetrain.setTimeout(timeout, msec);
     Drivetrain.driveFor(distance, inches, waitUntilDone);
@@ -57,6 +58,7 @@ void driveFor(double distance, int timeout = 0, double speed = DEFAULT_DRIVE_VEL
 }
 
 void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY, bool waitUntilDone = true) {
+    printf("\033[30mIM TURNING AHHHH\n");
     Drivetrain.setTurnVelocity(speed, percent);
     Drivetrain.setTimeout(timeout, msec);
     Drivetrain.turnToHeading(angle, degrees, waitUntilDone);
@@ -64,7 +66,7 @@ void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY,
 }
 
 void autonomous(void) {
-    wallStakeArm.spinToPosition(260, degrees);
+    wallStakeArm.spinToPosition(260, degrees);  // try setting to false
 
     // Goal 1
     piston.set(false);
@@ -83,28 +85,36 @@ void autonomous(void) {
     wait(500, msec);
     turnTo(-90);
     driveFor(26);
-    turnTo(0);
-    driveFor(32, 5000, 30);  // Drive slower to allow intaking
+    wait(500, msec);
+    turnTo(0, 0, 40);        // Turn slower for accuracy
+    driveFor(32, 5000, 35);  // Drive slower to allow intaking
     wait(750, msec);
+    printf("\033[31m====about to go to th wall====\n");
     // Go up to the wall to intake that one red
     turnTo(-130, 2500);
-    driveFor(20, 1500);  // Drive with timeout 1500
+    driveFor(19, 1500);  // Drive with timeout 1500
     wait(750, msec);
-    // Place in positive corner
+
+    printf("\033[31m====placing goal in corner (aliging with wall)====\n");
+    // Place in corner
     turnTo(162, 3000);
     driveFor(-30, 1500);
-    piston.set(false);
+    piston.set(false);  // Drop goal in positive corner
+    printf("\033[31m====goal placed====\n");
 
     // Goal 2
-    turnTo(169, 2000);
-    driveFor(82);
-    conveyor.stop();
-    turnTo(-72, 2000);
-    intake.stop();
-    driveFor(-48, 5000);
-    piston.set(true);  // Grabbed the next goal
+    turnTo(169, 2000, 30);  // Angle to correct place to pick up that ring
+    driveFor(82, 100);      // Drive to the ring (may increase distance)
+    conveyor.stop();        // Once picking it up, stop conveyor to not lose the ring
+    turnTo(-72, 2000);      // turn to goal angle
+    intake.stop();          // Ok, now we can stop the intake
+    driveFor(-48, 5000);    // Go to the next goal
+    piston.set(true);       // Grabbed the next goal
+
+    // Now we can start spinning
     conveyor.spin(forward);
     intake.spin(forward);
+
     wait(500, msec);
     turnTo(45, 2000);
     driveFor(32, 5000);
@@ -122,10 +132,10 @@ void autonomous(void) {
     driveFor(-20, 2500);
     piston.set(true);
 
-    // Todo: shove in corner
+    // Todo: shove goal in corner
 
     // Touch ladder
-    turnTo(-135, 3500);
+    turnTo(-145, 3500);
     driveFor(48, 4000);
 
     return;
@@ -156,15 +166,17 @@ int main() {
     wallStakeArm.setMaxTorque(100, percent);
     wallStakeArm.setStopping(hold);
 
-    Inertial.calibrate(3);
+    Brain.Screen.printAt(0, 0, "Calibrating...");
+    Inertial.calibrate();
     while (Inertial.isCalibrating()) {
         wait(100, msec);
     }
+    Brain.Screen.clearScreen();
 
     // driveStraight(leftDriveSmart, rightDriveSmart, -24);
 
     // Prevent main from exiting with an infinite loop.
     while (true) {
-        wait(100, msec);
+        wait(1, seconds);
     }
 }
