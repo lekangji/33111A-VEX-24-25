@@ -36,15 +36,19 @@ inertial Inertial = inertial(PORT9);
 // left motor, right motor, wheelTravel (circumfrence of wheels), drivetrainInertial, trackWidth, wheelBase, units, gearRatio
 smartdrive Drivetrain = smartdrive(leftDriveSmart, rightDriveSmart, Inertial, 239.3893602, 317.5, 228.6, mm, 2);
 
+// Defining other motors: converyor and intake
 motor conveyor = motor(PORT17, ratio18_1, true);
 motor intake = motor(PORT3, ratio18_1, true);
 
+// Defining the pistons
 digital_out pistonClamp = digital_out(Brain.ThreeWirePort.A);
 digital_out pistonSweeper = digital_out(Brain.ThreeWirePort.B);
 
+// Defining speed constants
 const int DEFAULT_DRIVE_VELOCITY = 85;
 const int DEFAULT_TURN_VELOCITY = 60;
 
+// Definitng drive and turn functions
 void resetDrive() {
     Drivetrain.setDriveVelocity(DEFAULT_DRIVE_VELOCITY, percent);
     Drivetrain.setTurnVelocity(DEFAULT_TURN_VELOCITY, percent);
@@ -65,6 +69,7 @@ void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY,
     resetDrive();
 }
 
+// Start of autonomous program
 void autonomous(void) {
     Drivetrain.setHeading(40, degrees);
 
@@ -76,10 +81,6 @@ void autonomous(void) {
     intake.spin(forward);
     conveyor.spin(forward);
     turnTo(180);
-
-    // Reset the heading and rotation
-    // Drivetrain.setHeading(0, degrees);
-    // Drivetrain.setRotation(0, degrees);
 
     driveFor(20,3000,40.0);
     wait(500, msec);
@@ -124,26 +125,13 @@ void autonomous(void) {
     pistonClamp.set(false);
     driveFor(20, 2000);
     return;
-
-    // Goal 3
-    turnTo(90, 2500);
-    driveFor(-20, 2500);
-    pistonClamp.set(true);
-    turnTo(-135, 3500);
-    driveFor(48, 4000);
-
-    return;
-    Drivetrain.turnFor(135, degrees);
-    Drivetrain.driveFor(-14, inches);
-    pistonClamp.set(false);
-    Drivetrain.driveFor(56, inches);
 }
 
 int main() {
     // Set up callbacks for autonomous and driver control periods.
     Competition.autonomous(autonomous);
 
-    // Initalize some motor stuff
+    // Initalizing
     Drivetrain.setDriveVelocity(DEFAULT_DRIVE_VELOCITY, percent);
     Drivetrain.setTurnVelocity(DEFAULT_TURN_VELOCITY, percent);
     Drivetrain.setStopping(brake);
@@ -161,8 +149,6 @@ int main() {
     while (Inertial.isCalibrating()) {
         wait(100, msec);
     }
-
-    // driveStraight(leftDriveSmart, rightDriveSmart, -24);
 
     // Prevent main from exiting with an infinite loop.
     while (true) {
