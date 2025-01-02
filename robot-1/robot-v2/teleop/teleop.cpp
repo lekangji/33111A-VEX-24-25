@@ -50,8 +50,8 @@ bool drivetrainSwitchEnabled = true;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 1;  // 0 = testing, 1 = simple, 2 = complex, 3 = do nothing
-short autonomousColor = 1;          // Let 1 be red and -1 be blue
+unsigned short autonomousRoute = 1;  // 0 = testing, 1 = positive (simple), 2 = negative (complex), 3 = do nothing
+short autonomousColor = -1;          // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
 
@@ -60,7 +60,7 @@ enum DrivetrainMode {
     TANK,
     ARCADE
 };
-DrivetrainMode drivetrainMode = TANK;
+DrivetrainMode drivetrainMode = TANK;  // Tank by default
 
 // Control variables
 bool conveyorActive = false;
@@ -134,7 +134,7 @@ void autonomous(void) {
     conveyor.setVelocity(80, percent);
 
     wallStakeArm.setPosition(0, degrees);
-    wallStakeArm.spinToPosition(startWallStakeArmPosition, degrees, true);
+    wallStakeArm.spinFor(startWallStakeArmPosition, degrees, false);
 
     // Autonomous
     if (autonomousRoute == 0) {
@@ -142,14 +142,14 @@ void autonomous(void) {
         Drivetrain.driveFor(24, inches);
         Drivetrain.turnFor(90, degrees);
     } else if (autonomousRoute == 1) {
-        // Route 1: The right side (simple route)
+        // Route 1: The positive side (simple route)
         piston.set(false);
-        Drivetrain.driveFor(-34, inches);
+        Drivetrain.driveFor(-36, inches);
         piston.set(true);
         wait(250, msec);
         conveyor.spin(forward);
         Drivetrain.setTimeout(3000, msec);
-        Drivetrain.turnFor(-96 * autonomousColor, degrees);
+        Drivetrain.turnFor(-90 * autonomousColor, degrees);
         intake.spin(forward);
         wait(100, msec);
         Drivetrain.setTimeout(3000, msec);
@@ -166,7 +166,7 @@ void autonomous(void) {
         Drivetrain.setTimeout(2000, msec);
         Drivetrain.driveFor(18, inches);
     } else if (autonomousRoute == 2) {
-        // Route 1: The left side (complex route)
+        // Route 2: The negative side (complex route)
         piston.set(false);
         Drivetrain.driveFor(-30, inches);
         piston.set(true);
