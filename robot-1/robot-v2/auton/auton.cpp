@@ -47,13 +47,14 @@ bool intakeOperating = true;
 bool conveyorOperating = true;
 
 const bool stallLoopEnabled = true;
+const unsigned short reverseTime = 200;  // In msec
 
-const short conveyorStuckVelocity = 5;
-const unsigned short conveyorStuckLimit = 10;
+const unsigned short conveyorStuckVelocity = 5;
+const unsigned short conveyorStuckLimit = 15;
 const float conveyorStuckCurrent = 2;
 
 const unsigned short intakeStuckVelocity = 5;
-const unsigned short intakeStuckLimit = 10;
+const unsigned short intakeStuckLimit = 15;
 const float intakeStuckCurrent = 2;
 
 void resetDrive() {
@@ -86,10 +87,7 @@ void spinIntake(directionType direction) {
 void spinIntake(directionType direction, double speed) {
     while (!intakeOperating)
         wait(20, msec);
-    if (speed == 0)
-        intake.stop();
-    else
-        intake.spin(forward, speed, percent);
+    intake.spin(forward, speed, percent);
 }
 void stopIntake() {
     while (!intakeOperating)
@@ -105,10 +103,7 @@ void spinConveyor(directionType direction) {
 void spinConveyor(directionType direction, double speed) {
     while (!conveyorOperating)
         wait(20, msec);
-    if (speed == 0)
-        conveyor.stop();
-    else
-        conveyor.spin(forward, speed, percent);
+    conveyor.spin(forward, speed, percent);
 }
 void stopConveyor() {
     while (!conveyorOperating)
@@ -195,8 +190,9 @@ void autonomous(void) {
     // Goal 3
     printf("\033[31m====Going for goal 3====\n");
     driveFor(4, 500, 100);
-    turnTo(-135, 1000);
+    turnTo(-140, 1000);
     spinIntake(forward);
+    wait(250, msec);
     driveFor(42, 2000);
     wait(500, msec);
     turnTo(-180, 2000);
@@ -232,33 +228,35 @@ int stallLoop() {
 
         if (conveyorCounter >= conveyorStuckLimit) {
             printf("\033[31mConveyor is stuck! Stopping program to reverse.\n");
+            conveyorCounter = 0;
 
             // Store current motor commands
             directionType direction = conveyor.direction();
-            double velocity = conveyor.velocity(percent);
-            printf("Direction: %d, Velocity: %.2f\n", direction, velocity);
+            double velocity = conveyor.command(rpm);  // Horrible function in the protected class. Must go in header file to change.
+            printf("Direction: %d, Velocity: %.2f rpm\n", direction, velocity);
 
-            intakeOperating = false;
-            conveyor.spinFor(reverse, 1, seconds);
-            intakeOperating = true;
-            conveyorCounter = 0;
+            conveyorOperating = false;
+            conveyor.spin(reverse);
+            wait(reverseTime, msec);
+            conveyorOperating = true;
 
-            conveyor.spin(direction, velocity, percent);
+            conveyor.spin(direction, velocity, rpm);
         }
         if (intakeCounter >= intakeStuckLimit) {
             printf("\033[31mIntake is stuck! Stopping program to reverse.\n");
+            intakeCounter = 0;
 
             // Store current motor commands
             directionType direction = intake.direction();
-            double velocity = intake.velocity(percent);
-            printf("Direction: %d, Velocity: %.2f\n", direction, velocity);
+            double velocity = intake.command(rpm);  // Horrible function in the protected class. Must go in header file to change.
+            printf("Direction: %d, Velocity: %.2f rpm\n", direction, velocity);
 
-            conveyorOperating = false;
-            intake.spinFor(reverse, 1, seconds);
-            conveyorOperating = true;
-            intakeCounter = 0;
+            intakeOperating = false;
+            intake.spin(reverse);
+            wait(reverseTime, msec);
+            intakeOperating = true;
 
-            intake.spin(direction, velocity, percent);
+            intake.spin(direction, velocity, rpm);
         }
 
         wait(20, msec);
