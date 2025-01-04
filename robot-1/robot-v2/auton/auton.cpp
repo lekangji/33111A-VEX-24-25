@@ -152,11 +152,11 @@ void autonomous(void) {
     driveFor(26);
     wait(500, msec);
     turnTo(0, 3000, 30);     // Turn slower for accuracy
-    driveFor(35, 5000, 30);  // Drive slower to allow intaking
+    driveFor(36, 5000, 30);  // Drive slower to allow intaking
     wait(750, msec);
     printf("\033[31m====about to go to the wall====\n");
     // Go up to the wall to intake that one red
-    turnTo(-130, 2500);
+    turnTo(-125, 2500);
     driveFor(20, 1500);
     wait(750, msec);
 
@@ -176,7 +176,7 @@ void autonomous(void) {
     driveFor(84, 10000, 80);  // Drive to the ring (90)
     stopConveyor();           // Once picking it up, stop conveyor to not lose the ring
     printf("\033[31m====Turn to pick up goal====\n");
-    turnTo(-67, 3500, 25);     // Turn to goal angle
+    turnTo(-68, 9000, 30);     // Turn to goal angle
     stopIntake();              // Ok, now we can stop the intake
     driveFor(-56, 5000, 100);  // Go to the next goal
     printf("\033[31m====Grabbing goal 🙏 pls work====\n");
@@ -186,17 +186,17 @@ void autonomous(void) {
     spinIntake(forward);
     spinConveyor(forward);
 
-    wait(500, msec);
-    turnTo(30, 2000);
-    driveFor(26, 4000);
-    wait(500, msec);
-    turnTo(90, 2000);
-    driveFor(23, 4000);
-    wait(500, msec);
+    wait(250, msec);
+    turnTo(30, 2000);      // Turn to face first ring
+    driveFor(28, 3500);    // Drive to first ring
+    wait(500, msec);       // Wait for intake
+    turnTo(90, 2000, 35);  // Turn to next ring
+    driveFor(23, 3500);    // Drive to next ring
+    wait(500, msec);       // Wait for intake
 
     // Drive all the way down the field
     printf("\033[31m====Driving down the field====\n");
-    turnTo(0, 2500);
+    turnTo(0, 2500, 30);
     driveFor(84, 7000);
     wait(1500, msec);
     driveFor(-10, 1500);
@@ -218,11 +218,10 @@ void autonomous(void) {
     driveFor(42, 2000);
     wait(500, msec);
     turnTo(-180, 2000);
-    driveFor(-20, 2000);
-    piston.set(true);
-    // With the new goal, we can start spinning again
+    driveFor(-24, 2000);
     spinConveyor(forward);
-    wait(1, seconds);
+    piston.set(true);  // With the new goal, we can start spinning again
+    wait(2, seconds);
     piston.set(false);
     printf("\033[31m====Goal 3 placed====\n");
 }
