@@ -38,7 +38,7 @@ smartdrive Drivetrain = smartdrive(leftDriveSmart, rightDriveSmart, Inertial, 23
 
 // Defining other motors: converyor and intake
 motor conveyor = motor(PORT17, ratio18_1, true);
-motor intake = motor(PORT3, ratio18_1, true);
+motor intake = motor(PORT3, ratio18_1, true); 
 
 // Defining the pistons
 digital_out pistonClamp = digital_out(Brain.ThreeWirePort.A);
@@ -74,20 +74,20 @@ void autonomous(void) {
     Drivetrain.setHeading(40, degrees);
 
     pistonClamp.set(false);
-    driveFor(-14,2000, 60.0);
-    wait(500,msec);
+    driveFor(-14, 2000, 60.0);
     pistonClamp.set(true); // Goal 1 in possession
+    wait(300, msec);
 
-    intake.spin(forward);
-    conveyor.spin(forward);
-    turnTo(180);
+    //intake.spin(forward);
+    //conveyor.spin(forward);
+    turnTo(183);
 
-    driveFor(20,3000,40.0); // Starting to intake rings
+    driveFor(20,3000, 60.0); // Starting to intake rings
     wait(500, msec);
     turnTo(-85);
-    driveFor(22,3000,40.0);
+    driveFor(22,3000,60.0);
     turnTo(0);
-    driveFor(32, 5000, 30.0);  // Intaking the 2 rings in a row
+    driveFor(32, 5000, 40.0);  // Intaking the 2 rings in a row
     wait(750, msec);
     turnTo(-130, 2500);
     driveFor(17, 1500, 60.0);  // Go up to the wall to intake that one red
@@ -96,38 +96,46 @@ void autonomous(void) {
     driveFor(-30, 1500); // Placed in positive corner
     pistonClamp.set(false);
 
-    driveFor(2, 200); 
+    //intake.stop();
+    //conveyor.stop();
+    driveFor(2, 400); 
     turnTo(169, 2000); // Aligning
 
     // Starting from here, needs fixes
-    driveFor(103, 5000);
-    turnTo(-83, 2000);
+    driveFor(101.5, 5000);
+    turnTo(-85, 2000);
     driveFor(-24, 5000, 60.0); // Driving towards Goal 2
     pistonClamp.set(true);  // Goal 2 in possession
-    conveyor.spin(forward);
-    intake.spin(forward);
+    //conveyor.spin(forward);
+    //intake.spin(forward);
     wait(500, msec);
     turnTo(45, 2000);
-    driveFor(32.5, 3000, 50.0); // Intaking ring
+    driveFor(31.5, 3000, 60.0); // Intaking ring
     wait(500, msec);
     turnTo(95, 2000);
-    driveFor(24, 3000, 50.0); // Intaking ring
+    driveFor(22, 3000, 60.0); // Intaking ring
     turnTo(12, 2000);
     driveFor(47, 3500, 60.0); // Stage 1 of driving in a line to intake 3 rings in a row
-    driveFor(48, 3500, 30.0); // Stage 2 of driving in a line to intake 3 rings in a row
+    driveFor(48, 3500, 40.0); // Stage 2 of driving in a line to intake 3 rings in a row
 
     wait(500, msec);
-    driveFor(-12, 2000); // Backing up to create space
+    driveFor(-12, 2000, 60.0); // Backing up to create space
     turnTo(95, 2000); // Turning to face the other red ring
-    driveFor(8, 2000); // Intaking it
+    driveFor(9.5, 2000, 60.0); // Intaking it
     wait(500, msec);
-    driveFor(-8, 2000); // Backing up
-    turnTo(65, 2000); // Aligning to corner
-    driveFor(-12, 2000); // Shove into corner
+    driveFor(-9.5, 2000, 60.0); // Backing up
+    turnTo(-115, 2000); // Aligning to corner
+    driveFor(-12, 2000, 60.0); // Shove into corner
     pistonClamp.set(false); // Released Goal 2
-    driveFor(20, 2000);
-    intake.stop();
-    conveyor.stop();
+    driveFor(16, 2000, 60.0);
+    // Needs testing
+    turnTo(90, 2000);
+    driveFor(-12,2000, 60.0);
+    pistonClamp.set(true); // Goal 3 in possession
+    turnTo(180, 2000);
+    driveFor(20, 2000, 60.0);
+    //intake.stop();
+    //conveyor.stop();
     return;
 }
 
