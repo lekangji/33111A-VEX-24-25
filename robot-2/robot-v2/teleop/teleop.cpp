@@ -1,8 +1,8 @@
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
-/*    Author:       lekan                                                     */
-/*    Created:      1/12/2025, 2:40:50 PM                                     */
+/*    Author:       rogerc                                                    */
+/*    Created:      12/27/2024, 11:17:29 PM                                   */
 /*    Description:  V5 project                                                */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
@@ -15,8 +15,6 @@
 
 #include "vex.h"
 using namespace vex;
-
-// TODO: add auton driving functions to 15 sec auton
 
 brain Brain;
 competition Competition;
@@ -39,8 +37,8 @@ inertial Inertial = inertial(PORT9);
 smartdrive Drivetrain = smartdrive(leftDriveSmart, rightDriveSmart, Inertial, 239.3893602, 317.5, 228.6, mm, 2);
 
 // Defining other motors: converyor and intake
-motor conveyor = motor(PORT17, ratio18_1, true);
-motor intake = motor(PORT3, ratio18_1, true);
+motor conveyor = motor(PORT17, ratio18_1, false);
+motor intake = motor(PORT3, ratio18_1, true); 
 
 // Defining the pistons
 digital_out pistonClamp = digital_out(Brain.ThreeWirePort.A);
@@ -54,7 +52,7 @@ bool drivetrainSwitchEnabled = false;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 1;  // 0 = testing, 1 = positive (simple), 2 = negative (complex), 3 = do nothing
+unsigned short autonomousRoute = 2;  // 0 = testing, 1 = positive (simple), 2 = negative (complex), 3 = do nothing
 short autonomousColor = -1;          // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
@@ -71,7 +69,8 @@ bool conveyorActive = false;
 bool intakeActive = false;
 bool drivetrainLNeedsToBeStopped = true;
 bool drivetrainRNeedsToBeStopped = true;
-bool pistonState = false;
+bool pistonClampState = false;
+bool pistonSweeperState = false;
 
 // Constants
 
@@ -83,8 +82,10 @@ const unsigned short intakeStuckLimit = 10;
 const float intakeStuckCurrent = 2;
 const unsigned short intakeStuckVelocity = 5;
 
+/*
 const double startWallStakeArmPosition = 260;
 const double maxWallStakeArmPosition = 660;
+*/
 
 /**
  * Initializes the robot's systems before the competition starts.
@@ -134,8 +135,10 @@ void autonomous(void) {
     Drivetrain.setTurnVelocity(40, percent);
     conveyor.setVelocity(80, percent);
 
+    /*
     wallStakeArm.setPosition(0, degrees);
     wallStakeArm.spinFor(startWallStakeArmPosition, degrees, false);
+    */
 
     // Autonomous
     if (autonomousRoute == 0) {
@@ -260,17 +263,30 @@ void controlDrivetrain() {
  *
  * @note Uses a static variable to track the previous state of the button.
  */
-void controlPiston() {
-    static bool lastButtonState = false;  // Track the previous state of the button
-    bool currentButtonState = Controller.ButtonL1.pressing();
+void controlPistonClamp() {
+    static bool lastButtonAState = false;  // Track the previous state of the button
+    bool currentButtonAState = Controller.ButtonA.pressing();
 
-    if (currentButtonState && !lastButtonState) {  // Detect button press
-        pistonState = !pistonState;                // Toggle the piston state
-        pistonClamp.set(pistonState);
+    if (currentButtonAState && !lastButtonAState) {  // Detect button press
+        pistonClampState = !pistonClampState;                // Toggle the piston state
+        pistonClamp.set(pistonClampState);
     }
 
-    lastButtonState = currentButtonState;  // Update the previous state
+    lastButtonAState = currentButtonAState;  // Update the previous state
 }
+
+void controlPistonSweeper() {
+    static bool lastButtonBState = false;  // Track the previous state of the button
+    bool currentButtonBState = Controller.ButtonB.pressing();
+
+    if (currentButtonBState && !lastButtonBState) {  // Detect button press
+        pistonSweeperState = !pistonSweeperState;                // Toggle the piston state
+        pistonSweeper.set(pistonSweeperState);
+    }
+
+    lastButtonBState = currentButtonBState;  // Update the previous state
+}
+
 
 /**
  * Handles the control of the intake and conveyor motors based on the controller's input.
@@ -313,6 +329,9 @@ void controlIntakeAndConveyor() {
  *
  * Otherwise, the wall stake arm will stop if it is not already stopped.
  */
+
+
+/*
 void controlWallStakeArm() {
     if (Controller.ButtonL1.pressing())
         wallStakeArm.spin(forward);
@@ -321,21 +340,8 @@ void controlWallStakeArm() {
     else
         wallStakeArm.stop();
 }
+*/
 
-/**
- * Handles the control of the sweeper arm based on the controller's input.
- *
- * If the Right button is pressed, the sweeper arm spins forward.
- * If the Left button is pressed, the sweeper arm spins reverse.
- *
- * Otherwise, the sweeper arm will stop if it is not already stopped.
- */
-void controlSweeperArm() {
-    if (Controller.ButtonX.pressing()) {
-        sweeperState = !sweeperState;
-        pistonSweeper.set(sweeperState);
-    }
-}
 
 /**
  * Continuously handles controller input and updates the robot's systems accordingly.
@@ -346,15 +352,17 @@ int teleopLoop() {
     if (!teleopCodeEnabled)
         return 0;
 
+    /*
     wallStakeArm.spinToPosition(startWallStakeArmPosition, degrees, true);
+    */
 
     // Handle controller input
     while (true) {
         controlDrivetrain();
         controlIntakeAndConveyor();
-        controlPiston();
-        controlSweeperArm();
-        controlWallStakeArm();
+        controlPistonClamp();
+        controlPistonSweeper();
+        //controlWallStakeArm();
         wait(20, msec);
     }
 }
