@@ -82,11 +82,6 @@ const unsigned short intakeStuckLimit = 10;
 const float intakeStuckCurrent = 2;
 const unsigned short intakeStuckVelocity = 5;
 
-/*
-const double startWallStakeArmPosition = 260;
-const double maxWallStakeArmPosition = 660;
-*/
-
 /**
  * Initializes the robot's systems before the competition starts.
  * This function is only called once after the V5 has been powered on and not every time that the robot is disabled.
@@ -135,11 +130,6 @@ void autonomous(void) {
     Drivetrain.setTurnVelocity(40, percent);
     conveyor.setVelocity(80, percent);
 
-    /*
-    wallStakeArm.setPosition(0, degrees);
-    wallStakeArm.spinFor(startWallStakeArmPosition, degrees, false);
-    */
-
     // Autonomous
     if (autonomousRoute == 0) {
         // Route 0: Testing purposes only
@@ -170,7 +160,7 @@ void autonomous(void) {
         Drivetrain.setTimeout(2000, msec);
         Drivetrain.driveFor(18, inches);
     } else if (autonomousRoute == 2) {
-        // Route 2: The negative side (complex route)
+        // Route 2: The negative side (complex route) ((doesn't work))
         pistonClamp.set(false);
         Drivetrain.driveFor(-30, inches);
         pistonClamp.set(true);
@@ -259,7 +249,7 @@ void controlDrivetrain() {
 }
 
 /**
- * Toggles the piston state each time the L1 button is pressed.
+ * Toggles the piston state each time the A button is pressed.
  *
  * @note Uses a static variable to track the previous state of the button.
  */
@@ -293,10 +283,6 @@ void controlPistonSweeper() {
  *
  * If R1 is pressed, the intake and conveyor motors spin forward.
  * If R2 is pressed, the intake and conveyor motors spin reverse.
- * If the Up button is pressed, the conveyor motor spins forward.
- * If the Down button is pressed, the conveyor motor spins reverse.
- * If the X button is pressed, the intake motor spins forward.
- * If the B button is pressed, the intake motor spins reverse.
  *
  * Otherwise, the motors will stop if they are not already stopped.
  */
@@ -325,27 +311,6 @@ void controlIntakeAndConveyor() {
         intake.stop();
 }
 
-/**
- * Handles the control of the wall stake arm based on the controller's input.
- *
- * If the A button is pressed, the wall stake arm spins forward when the rotaiton is less than the max wall stake position.
- * If the Y button is pressed, the wall stake arm spins reverse.
- *
- * Otherwise, the wall stake arm will stop if it is not already stopped.
- */
-
-
-/*
-void controlWallStakeArm() {
-    if (Controller.ButtonL1.pressing())
-        wallStakeArm.spin(forward);
-    else if (Controller.ButtonL2.pressing())
-        wallStakeArm.spin(reverse);
-    else
-        wallStakeArm.stop();
-}
-*/
-
 
 /**
  * Continuously handles controller input and updates the robot's systems accordingly.
@@ -355,10 +320,6 @@ void controlWallStakeArm() {
 int teleopLoop() {
     if (!teleopCodeEnabled)
         return 0;
-
-    /*
-    wallStakeArm.spinToPosition(startWallStakeArmPosition, degrees, true);
-    */
 
     // Handle controller input
     while (true) {
