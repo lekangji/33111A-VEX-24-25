@@ -60,8 +60,8 @@ int colorSortTime = 400;
 bool colorSortEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 4;  // 0 = testing, 1 = positive (simple v1), 2 = negative (complex), 3 = do nothing, 4 = positive (simple v2)
-short allianceColor = -1;          // Let 1 be red and -1 be blue
+unsigned short autonomousRoute = 2;  // 0 = testing, 1 = positive (simple v2), 2 = negative (complex), 3 = do nothing, 4 = positive (simple v1)
+short allianceColor = 1;          // Let 1 be red and -1 be blue
 bool autonWinPoint = true;
 
 
@@ -136,14 +136,13 @@ void initalize(bool onlyMotors = false) {
     conveyor.setVelocity(100, percent);
     conveyor.setMaxTorque(100, percent);
     conveyor.setStopping(coast);
-    intake.setVelocity(100, percent);
+    intake.setVelocity(75, percent);
     intake.setMaxTorque(100, percent);
     intake.setStopping(coast);
     wallStakeArm.setVelocity(50, percent);
     wallStakeArm.setMaxTorque(100, percent);
     wallStakeArm.setStopping(hold);
 
-    Optical.setLight(ledState::on);
     Optical.objectDetectThreshold(100);
     
     if (onlyMotors) return;
@@ -212,13 +211,13 @@ void autonomous(void) {
         Drivetrain.driveFor(-26, inches);
         pistonClamp.set(true);
         wait(100, msec);
-        Drivetrain.turnFor(90 * allianceColor, degrees);
+        Drivetrain.turnFor(87 * allianceColor, degrees);
         wait(100, msec);
         intake.spin(forward);
         conveyor.spin(forward);
         Drivetrain.driveFor(26, inches);
         wait(100, msec);
-        Drivetrain.turnFor(78 * allianceColor, degrees);
+        Drivetrain.turnFor(75 * allianceColor, degrees);
         wait(100, msec);
         Drivetrain.setDriveVelocity(60, percent);
         Drivetrain.driveFor(9.5, inches);
@@ -227,11 +226,11 @@ void autonomous(void) {
         wait(100, msec);
         Drivetrain.turnFor(26 * allianceColor, degrees);
         wait(100, msec);
-        Drivetrain.driveFor(9.75, inches);
+        Drivetrain.driveFor(5.75, inches);
         wait(600, msec);
         Drivetrain.setDriveVelocity(100, percent);
         Drivetrain.setTimeout(5000, msec);
-        Drivetrain.turnFor(80 * allianceColor, degrees);
+        Drivetrain.turnFor(77 * allianceColor, degrees);
         wait(100, msec);
         intake.stop();
         conveyor.stop();
@@ -414,6 +413,8 @@ void controlWallStakeArm() {
 
 void colorSort() {
     if (colorSortEnabled) {
+        Optical.setLight(ledState::on);
+ 
         if (Optical.color() == color::red && Optical.isNearObject()) {
             opticalColor = 1;
         } else if (Optical.color() == color::blue && Optical.isNearObject()) {
@@ -442,6 +443,18 @@ void colorSort() {
     }
 }
 
+void enableDisableColorSort() {
+    static bool lastButtonLeftArrowState = true;  // Track the previous state of the button
+    bool currentButtonLeftArrowState = Controller.ButtonLeft.pressing();
+
+    if (currentButtonLeftArrowState && !lastButtonLeftArrowState) {  // Detect button press
+        colorSortEnabled = !colorSortEnabled;                
+        Controller.rumble(".");
+    }
+
+    lastButtonLeftArrowState = currentButtonLeftArrowState;  // Update the previous state
+}
+
 
 
 /**
@@ -461,6 +474,7 @@ int teleopLoop() {
         controlPistonSweeper();
         controlWallStakeArm();
         colorSort();
+        enableDisableColorSort();
         wait(20, msec);
     }
 }
