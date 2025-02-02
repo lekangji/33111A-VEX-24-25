@@ -16,8 +16,6 @@
 #include "vex.h"
 using namespace vex;
 
-// TODO: add auton driving functions to 15 sec auton
-
 brain Brain;
 competition Competition;
 
@@ -33,6 +31,7 @@ motor wallStakeArm = motor(PORT12, ratio18_1, false);
 motor sweeperArm = motor(PORT13, ratio18_1, false);
 
 inertial Inertial = inertial(PORT16);
+// optical Optical = optical(PORT17);
 
 // left motor, right motor, wheelTravel (circumfrence of wheels), drivetrainInertial, trackWidth, wheelBase, units, gearRatio
 smartdrive Drivetrain = smartdrive(leftDriveSmart, rightDriveSmart, Inertial, 259.34, 320, 230, mm, 2);
@@ -45,13 +44,14 @@ digital_out piston = digital_out(Brain.ThreeWirePort.A);
 // Variables that enable/disable sections of code
 bool teleopCodeEnabled = true;
 bool stuckHelperCodeEnabled = true;
+bool colorDetectionCodeEnabled = false;
 bool infoCodeEnabled = true;
 bool drivetrainSwitchEnabled = true;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
 unsigned short autonomousRoute = 1;  // 0 = testing, 1 = positive (simple), 2 = negative (complex), 3 = do nothing
-short autonomousColor = -1;          // Let 1 be red and -1 be blue
+short teamColor = 1;                 // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
 
@@ -60,7 +60,7 @@ enum DrivetrainMode {
     TANK,
     ARCADE
 };
-DrivetrainMode drivetrainMode = TANK;  // Tank by default
+DrivetrainMode drivetrainMode = ARCADE;  // Arcade by default
 
 // Control variables
 bool conveyorActive = false;
@@ -90,6 +90,8 @@ const double maxWallStakeArmPosition = 660;
  */
 void initalize(bool onlyMotors = false) {
     // All activities that occur before the competition starts.
+
+    // Set up motors
     Drivetrain.setDriveVelocity(100, percent);
     Drivetrain.setTurnVelocity(100, percent);
     Drivetrain.setStopping(coast);
@@ -107,6 +109,12 @@ void initalize(bool onlyMotors = false) {
     sweeperArm.setStopping(hold);
 
     if (onlyMotors) return;
+
+    // Set up optical sensor
+    // Optical.gestureDisable();
+    // Optical.setLight(ledState::on);
+    // Optical.setLightPower(50, percent);
+    // Optical.integrationTime(10);  // Time in ms for sensor to collect data
 
     Brain.Screen.setFont(mono12);
 
@@ -129,9 +137,11 @@ void autonomous(void) {
 
     // Setup motors
     Drivetrain.setStopping(brake);
-    Drivetrain.setDriveVelocity(80, percent);
-    Drivetrain.setTurnVelocity(40, percent);
+    Drivetrain.setDriveVelocity(75, percent);
+    Drivetrain.setTurnVelocity(50, percent);
+    Drivetrain.setHeading(0, degrees);
     conveyor.setVelocity(80, percent);
+    intake.setVelocity(80, percent);
 
     wallStakeArm.setPosition(0, degrees);
     wallStakeArm.spinFor(startWallStakeArmPosition, degrees, false);
@@ -143,20 +153,23 @@ void autonomous(void) {
         Drivetrain.turnFor(90, degrees);
     } else if (autonomousRoute == 1) {
         // Route 1: The positive side (simple route)
+        printf("Running simple route");
+
         piston.set(false);
-        Drivetrain.driveFor(-36, inches);
+        Drivetrain.driveFor(-44, inches);
         piston.set(true);
-        wait(250, msec);
+        wait(100, msec);
+        Drivetrain.driveFor(8, inches);
         conveyor.spin(forward);
         Drivetrain.setTimeout(3000, msec);
-        Drivetrain.turnFor(-90 * autonomousColor, degrees);
+        Drivetrain.turnToHeading(-90 * teamColor, degrees);
         intake.spin(forward);
         wait(100, msec);
         Drivetrain.setTimeout(3000, msec);
-        Drivetrain.driveFor(28, inches);
+        Drivetrain.driveFor(26, inches);
         wait(300, msec);
         Drivetrain.setTimeout(5000, msec);
-        Drivetrain.turnToHeading(90 * autonomousColor, degrees);
+        Drivetrain.turnToHeading(90 * teamColor, degrees);
         wait(100, msec);
         intake.stop();
         Drivetrain.setDriveVelocity(90, percent);
@@ -167,32 +180,35 @@ void autonomous(void) {
         Drivetrain.driveFor(18, inches);
     } else if (autonomousRoute == 2) {
         // Route 2: The negative side (complex route)
+        printf("Running complex route");
+
         piston.set(false);
-        Drivetrain.driveFor(-30, inches);
+        Drivetrain.driveFor(-40, inches);
         piston.set(true);
         wait(250, msec);
-        Drivetrain.turnFor(68 * autonomousColor, degrees);
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.turnToHeading(90 * teamColor, degrees);
         wait(100, msec);
         intake.spin(forward);
         conveyor.spin(forward);
         Drivetrain.driveFor(26, inches);
         wait(250, msec);
-        Drivetrain.turnFor(48 * autonomousColor, degrees);
+        Drivetrain.turnFor(80 * teamColor, degrees);
         wait(100, msec);
         Drivetrain.driveFor(12, inches);
         wait(800, msec);
         Drivetrain.driveFor(-8, inches);
         wait(100, msec);
-        Drivetrain.turnFor(18 * autonomousColor, degrees);
+        Drivetrain.turnFor(25 * teamColor, degrees);
         wait(100, msec);
         Drivetrain.driveFor(10, inches);
         wait(1000, msec);
         Drivetrain.setTimeout(1, seconds);
-        Drivetrain.turnFor(-45 * autonomousColor, degrees);
+        Drivetrain.turnFor(-45 * teamColor, degrees);
         wait(100, msec);
         Drivetrain.setTimeout(2500, msec);
         Drivetrain.driveFor(-45, inches);
-        Drivetrain.turnFor(75 * autonomousColor, degrees);
+        Drivetrain.turnFor(75 * teamColor, degrees);
         Drivetrain.setTimeout(1, seconds);
         Drivetrain.driveFor(14, inches);
     } else if (autonomousRoute == 3) {
@@ -418,6 +434,27 @@ int stuckHelperLoop() {
     return 0;
 }
 
+// int colorDetectionLoop() {
+//     if (!colorDetectionCodeEnabled)
+//         return 0;
+
+//     // optical::rgbc opticalColor;
+//     color opticalColor;
+//     while (true) {
+//         // opticalColor = Optical.getRgb(false);
+
+//         color opticalColor = Optical.color();
+//         if (!lanuching && opticalColor == color::blue && teamColor == 1 || opticalColor == color::red && teamColor == -1) {
+//             // We intaked an incorrect ring
+//             controller.rumble('.');
+//             conveyor.spinFor(1, seconds);
+//         }
+
+//         wait(20, msec);
+//     }
+//     return 0;
+// }
+
 /**
  * Continuously prints information about the robot's brain and drivetrain to the screen.
  *
@@ -478,6 +515,7 @@ void driverControl(void) {
 
     task teleopTask(teleopLoop);
     task stuckHelperTask(stuckHelperLoop);
+    // task colorDetectionTask(colorDetectionLoop);
     task infoTask(infoLoop);
 }
 
