@@ -21,33 +21,33 @@ competition Competition;
 
 // Define all needed devices: (Ports are  currently placeholders)
 controller Controller = controller(primary);
-motor leftMotor1 = motor(PORT1, ratio6_1, false);
-motor leftMotor2 = motor(PORT1, ratio6_1, true);
-motor leftMotor3 = motor(PORT1, ratio6_1, false);
+motor leftMotor1 = motor(PORT20, ratio6_1, true);
+motor leftMotor2 = motor(PORT9, ratio6_1, true);
+motor leftMotor3 = motor(PORT10, ratio6_1, false);
 motor_group leftDriveSmart = motor_group(leftMotor1, leftMotor2, leftMotor3);
-motor rightMotor1 = motor(PORT1, ratio6_1, true);
+motor rightMotor1 = motor(PORT11, ratio6_1, false);
 motor rightMotor2 = motor(PORT1, ratio6_1, false);
-motor rightMotor3 = motor(PORT1, ratio6_1, true);
+motor rightMotor3 = motor(PORT2, ratio6_1, true);
 motor_group rightDriveSmart = motor_group(rightMotor1, rightMotor2, rightMotor3);
 
 // Defining the inertial sensor
-inertial Inertial = inertial(PORT1); 
+inertial Inertial = inertial(PORT15); 
 
 // left motor, right motor, wheelTravel (circumfrence of wheels), drivetrainInertial, trackWidth, wheelBase, units, gearRatio
-smartdrive Drivetrain = smartdrive(leftDriveSmart, rightDriveSmart, Inertial, 259.338473554, 0.0, 254.0, mm, 2/3);
+smartdrive Drivetrain = smartdrive(leftDriveSmart, rightDriveSmart, Inertial, 259.338473554, 323.85, 254.0, mm, 2/3);
 
 // Defining the optical sensor
-optical Optical = optical(PORT1);
+optical Optical = optical(PORT21);
 
 // Defining other motors: converyor and intake
-motor conveyor = motor(PORT1, ratio6_1, true);
-motor intake = motor(PORT1, ratio18_1, true); 
+motor conveyor = motor(PORT18, ratio6_1, false);
+motor intake = motor(PORT19, ratio18_1, true); 
 
-motor wallStakeArm = motor(PORT1, ratio18_1, false);
+motor ladyBrown = motor(PORT8, ratio18_1, false);
 
 // Defining the pistons
-digital_out pistonClamp = digital_out(Brain.ThreeWirePort.A);
-digital_out pistonSweeper = digital_out(Brain.ThreeWirePort.B);
+digital_out pistonClamp = digital_out(Brain.ThreeWirePort.F);
+digital_out pistonSweeper = digital_out(Brain.ThreeWirePort.H);
 
 // Variables that enable/disable sections of code
 bool teleopCodeEnabled = true;
@@ -59,12 +59,12 @@ bool conveyorManual = true;
 
 // Color Sort Stuff
 double opticalColor;
-int colorSortTime = 400;
+int colorSortTime = 220;
 bool colorSortEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 1;  // 0 = testing, 1 = positive, 2 = negative (complex), 3 = do nothing
-short allianceColor = 1;          // Let 1 be red and -1 be blue
+unsigned short autonomousRoute = 3;  // 0 = testing, 1 = positive, 2 = negative (complex), 3 = do nothing
+short allianceColor = -1;          // Let 1 be red and -1 be blue
 bool autonWinPoint = true;
 
 
@@ -92,9 +92,16 @@ const unsigned short intakeStuckLimit = 10;
 const float intakeStuckCurrent = 2;
 const unsigned short intakeStuckVelocity = 5;
 
+const unsigned short ladyBrownStuckLimit = 5;
+const float ladyBrownStuckCurrent = 2;
+const unsigned short ladyBrownStuckVelocity = 5;
+
+// Other stuff
+const unsigned short ladyBrownMacroDegrees = 135;
+
 // Defining speed constants
-const int DEFAULT_DRIVE_VELOCITY = 85;
-const int DEFAULT_TURN_VELOCITY = 70;
+const int DEFAULT_DRIVE_VELOCITY = 85.0;
+const int DEFAULT_TURN_VELOCITY = 70.0;
 
 // Definitng drive and turn functions
 void resetDrive() {
@@ -124,7 +131,6 @@ void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY,
     resetDrive();
 }
 
-
 /**
  * Initializes the robot's systems before the competition starts.
  * This function is only called once after the V5 has been powered on and not every time that the robot is disabled.
@@ -141,13 +147,14 @@ void initalize(bool onlyMotors = false) {
     conveyor.setMaxTorque(100, percent);
     conveyor.setStopping(coast);
 
-    intake.setVelocity(100, percent);
+    intake.setVelocity(75, percent);
     intake.setMaxTorque(100, percent);
     intake.setStopping(coast);
 
-    wallStakeArm.setVelocity(50, percent);
-    wallStakeArm.setMaxTorque(100, percent);
-    wallStakeArm.setStopping(hold);
+    ladyBrown.setVelocity(75, percent);
+    ladyBrown.setMaxTorque(100, percent);
+    ladyBrown.setStopping(hold);
+    ladyBrown.setPosition(0, degrees);
 
     Optical.objectDetectThreshold(100);
     
@@ -173,11 +180,24 @@ void autonomous(void) {
     // Autonomous
     if (autonomousRoute == 0) {
         // Route 0: Testing purposes only
-        Drivetrain.setHeading(-90 * allianceColor, degrees);
-        wait(15, sec);
+        driveFor(12, 3000);
     } else if (autonomousRoute == 1) {
         // Route 1: The positive/simple side (WIP)
-
+        Drivetrain.setHeading(180, degrees);
+        driveFor(-32, 3000);
+        turnFor(-90 * allianceColor, 2000, 70.0);
+        conveyor.spin(forward);
+        intake.spin(forward);
+        driveFor(9, 1000);
+        wait(500, msec);
+        turnFor(-116.57, 2000);
+        driveFor(51.67, 4000);
+        colorSortAuton();
+        driveFor(2, 1000);
+        wait(1000, msec);
+        turnFor(116.57, 2000);
+        wait(100, msec);
+        driveFor(9, 1000);
     } else if (autonomousRoute == 2) {
         // Route 2: The negative/coomplex side (WIP)
         
@@ -188,9 +208,6 @@ void autonomous(void) {
         // Default case if not in range
         Brain.Screen.print("No autonomous route found");
     }
-
-    intake.stop();
-    conveyor.stop();
 }
 
 /**
@@ -300,7 +317,7 @@ void controlIntakeAndConveyor() {
         if (!intakeActive)
             intake.stop();
     } else {
-        wait(20, msec);
+        // Do nothing
     }
 }
 
@@ -314,54 +331,21 @@ void controlIntakeAndConveyor() {
  */
 
 
-void controlWallStakeArm() {
+void controlLadyBrown() {
     if (Controller.ButtonL1.pressing())
-        wallStakeArm.spin(forward);
+        ladyBrown.spin(forward);
     else if (Controller.ButtonL2.pressing())
-        wallStakeArm.spin(reverse);
+        ladyBrown.spin(reverse);
     else
-        wallStakeArm.stop();
+        ladyBrown.stop();
 }
 
-/**
- * Sorts the rigns based on their color using the optical sensor.
- *
- * If the color of the detected ring is different from the alliance color, the conveyor will spin for a certain amount of time,
- * trying to launch it.
- *
- * Otherwise, the conveyor will continue manual control.
- */
-void colorSort() {
-    if (colorSortEnabled) {
-        Optical.setLight(ledState::on);
- 
-        if (Optical.color() == color::red && Optical.isNearObject()) {
-            opticalColor = 1;
-        } else if (Optical.color() == color::blue && Optical.isNearObject()) {
-            opticalColor = -1;
-        } else {
-            opticalColor = 0;
-        }
-
-        if (opticalColor == 1 && allianceColor != 1) {
-            conveyorManual = false;
-            conveyor.spinFor(forward, colorSortTime, msec);
-            conveyor.stop();
-            wait(500, msec);
-            conveyorManual = true;
-        } else if (opticalColor == -1 && allianceColor != -1) {
-            conveyorManual = false;
-            conveyor.spinFor(forward, colorSortTime, msec);
-            conveyor.stop();
-            wait(500, msec);
-            conveyorManual = true;
-        } else {
-            wait(20, msec);
-        }
-    } else {
-        wait(20, msec);
+void controlLadyBrownMacro() {
+    if (Controller.ButtonX.pressing()) {
+        ladyBrown.spinToPosition(ladyBrownMacroDegrees, degrees);
     }
 }
+
 
 /**
  * Toggles color sort each time the left arrow button is pressed.
@@ -398,8 +382,8 @@ int teleopLoop() {
         controlIntakeAndConveyor();
         controlPistonClamp();
         controlPistonSweeper();
-        controlWallStakeArm();
-        colorSort();
+        controlLadyBrown();
+        controlLadyBrownMacro();
         enableDisableColorSort();
         wait(20, msec);
     }
@@ -442,6 +426,72 @@ int stuckHelperLoop() {
     }
     return 0;
 }
+
+/**
+ * Sorts the rigns based on their color using the optical sensor.
+ *
+ * If the color of the detected ring is different from the alliance color, the conveyor will spin for a certain amount of time,
+ * trying to launch it.
+ *
+ * Otherwise, the conveyor will continue manual control.
+ */
+
+int colorSortLoop() {
+    while(true) {
+
+        if (colorSortEnabled) {
+            Optical.setLight(ledState::on);
+            
+            if (Optical.color() == color::red && Optical.isNearObject()) {
+                opticalColor = 1;
+            } else if (Optical.color() == color::blue && Optical.isNearObject()) {
+                opticalColor = -1;
+            } else {
+                opticalColor = 0;
+            }
+
+            if (opticalColor == 1 && allianceColor != 1) {
+                conveyorManual = false;
+                conveyor.spinFor(forward, colorSortTime, msec);
+                conveyor.stop();
+                wait(500, msec);
+                conveyorManual = true;
+            } else if (opticalColor == -1 && allianceColor != -1) {
+                conveyorManual = false;
+                conveyor.spinFor(forward, colorSortTime, msec);
+                conveyor.stop();
+                wait(500, msec);
+                conveyorManual = true;
+            } else {
+                // Do nothing
+            }
+        } else {
+            Optical.setLight(ledState::off);
+        }
+
+    }
+
+    return 0;
+}
+
+int resetLadyBrownDegreesLoop() {
+    unsigned short ladyBrownCounter = 0;
+
+    while (true) {
+        if (ladyBrown.velocity(rpm) < ladyBrownStuckVelocity && ladyBrown.current() >= ladyBrownStuckCurrent)
+            ladyBrownCounter += 1;
+        else
+            ladyBrownCounter = 0;
+
+        if (ladyBrownCounter >= ladyBrownStuckLimit && ladyBrown.position(degrees) < 30) {
+            ladyBrown.setPosition(0, degrees);
+            ladyBrownCounter = 0;
+        }
+        wait(20, msec);
+    }
+    return 0;
+}
+
 
 /**
  * Continuously prints information about the robot's brain and drivetrain to the screen.
@@ -493,6 +543,8 @@ void driverControl(void) {
     task teleopTask(teleopLoop);
     task stuckHelperTask(stuckHelperLoop);
     task infoTask(infoLoop);
+    task colorSortTask(colorSortLoop);
+    task resetLadyBrownDegreesTask(resetLadyBrownDegreesLoop);
 }
 
 int main() {
