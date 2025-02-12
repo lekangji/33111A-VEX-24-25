@@ -19,32 +19,35 @@ using namespace vex;
 brain Brain;
 competition Competition;
 
-// Define all needed devices:
+// Define all needed devices: (Ports are  currently placeholders)
 controller Controller = controller(primary);
-motor leftMotorFront = motor(PORT20, ratio18_1, true);
-motor leftMotorBack = motor(PORT19, ratio18_1, true);
-motor_group leftDriveSmart = motor_group(leftMotorFront, leftMotorBack);
-motor rightMotorFront = motor(PORT11, ratio18_1, false);
-motor rightMotorBack = motor(PORT1, ratio18_1, false);
-motor_group rightDriveSmart = motor_group(rightMotorFront, rightMotorBack);
-motor wallStakeMotorLeft = motor(PORT10, ratio18_1, false);
-motor wallStakeMotorRight = motor(PORT4, ratio18_1, false);
-motor_group wallStakeArm = motor_group(wallStakeMotorLeft, wallStakeMotorRight);
+motor leftMotor1 = motor(PORT20, ratio6_1, true);
+motor leftMotor2 = motor(PORT9, ratio6_1, true);
+motor leftMotor3 = motor(PORT10, ratio6_1, false);
+motor_group leftDriveSmart = motor_group(leftMotor1, leftMotor2, leftMotor3);
+motor rightMotor1 = motor(PORT11, ratio6_1, false);
+motor rightMotor2 = motor(PORT1, ratio6_1, false);
+motor rightMotor3 = motor(PORT2, ratio6_1, true);
+motor_group rightDriveSmart = motor_group(rightMotor1, rightMotor2, rightMotor3);
 
-inertial Inertial = inertial(PORT9);
-
-optical Optical = optical(PORT4);
+// Defining the inertial sensor
+inertial Inertial = inertial(PORT15); 
 
 // left motor, right motor, wheelTravel (circumfrence of wheels), drivetrainInertial, trackWidth, wheelBase, units, gearRatio
-smartdrive Drivetrain = smartdrive(leftDriveSmart, rightDriveSmart, Inertial, 239.3893602, 317.5, 228.6, mm, 2);
+smartdrive Drivetrain = smartdrive(leftDriveSmart, rightDriveSmart, Inertial, 259.338473554, 323.85, 254.0, mm, 2/3);
+
+// Defining the optical sensor
+optical Optical = optical(PORT21);
 
 // Defining other motors: converyor and intake
-motor conveyor = motor(PORT17, ratio18_1, true);
-motor intake = motor(PORT3, ratio18_1, true); 
+motor conveyor = motor(PORT18, ratio6_1, false);
+motor intake = motor(PORT19, ratio18_1, true); 
+
+motor ladyBrown = motor(PORT8, ratio18_1, false);
 
 // Defining the pistons
-digital_out pistonClamp = digital_out(Brain.ThreeWirePort.A);
-digital_out pistonSweeper = digital_out(Brain.ThreeWirePort.B);
+digital_out pistonClamp = digital_out(Brain.ThreeWirePort.F);
+digital_out pistonSweeper = digital_out(Brain.ThreeWirePort.H);
 
 // Variables that enable/disable sections of code
 bool teleopCodeEnabled = true;
@@ -56,12 +59,12 @@ bool conveyorManual = true;
 
 // Color Sort Stuff
 double opticalColor;
-int colorSortTime = 400;
+int colorSortTime = 220;
 bool colorSortEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 2;  // 0 = testing, 1 = positive (simple v2), 2 = negative (complex), 3 = do nothing, 4 = positive (simple v1)
-short allianceColor = 1;          // Let 1 be red and -1 be blue
+unsigned short autonomousRoute = 3;  // 0 = testing, 1 = positive, 2 = negative (complex), 3 = do nothing
+short allianceColor = -1;          // Let 1 be red and -1 be blue
 bool autonWinPoint = true;
 
 
@@ -89,9 +92,16 @@ const unsigned short intakeStuckLimit = 10;
 const float intakeStuckCurrent = 2;
 const unsigned short intakeStuckVelocity = 5;
 
+const unsigned short ladyBrownStuckLimit = 5;
+const float ladyBrownStuckCurrent = 2;
+const unsigned short ladyBrownStuckVelocity = 5;
+
+// Other stuff
+const unsigned short ladyBrownMacroDegrees = 135;
+
 // Defining speed constants
-const int DEFAULT_DRIVE_VELOCITY = 85;
-const int DEFAULT_TURN_VELOCITY = 70;
+const int DEFAULT_DRIVE_VELOCITY = 85.0;
+const int DEFAULT_TURN_VELOCITY = 70.0;
 
 // Definitng drive and turn functions
 void resetDrive() {
@@ -121,7 +131,6 @@ void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY,
     resetDrive();
 }
 
-
 /**
  * Initializes the robot's systems before the competition starts.
  * This function is only called once after the V5 has been powered on and not every time that the robot is disabled.
@@ -133,15 +142,19 @@ void initalize(bool onlyMotors = false) {
     Drivetrain.setDriveVelocity(100, percent);
     Drivetrain.setTurnVelocity(100, percent);
     Drivetrain.setStopping(coast);
+
     conveyor.setVelocity(100, percent);
     conveyor.setMaxTorque(100, percent);
     conveyor.setStopping(coast);
+
     intake.setVelocity(75, percent);
     intake.setMaxTorque(100, percent);
     intake.setStopping(coast);
-    wallStakeArm.setVelocity(50, percent);
-    wallStakeArm.setMaxTorque(100, percent);
-    wallStakeArm.setStopping(hold);
+
+    ladyBrown.setVelocity(75, percent);
+    ladyBrown.setMaxTorque(100, percent);
+    ladyBrown.setStopping(hold);
+    ladyBrown.setPosition(0, degrees);
 
     Optical.objectDetectThreshold(100);
     
@@ -167,115 +180,39 @@ void autonomous(void) {
     // Autonomous
     if (autonomousRoute == 0) {
         // Route 0: Testing purposes only
-        Drivetrain.setHeading(-90 * allianceColor, degrees);
-        wait(15, sec);
+        driveFor(12, 3000);
     } else if (autonomousRoute == 1) {
-        // Route 1: The positive side (simple route v2 WIP)
-        Inertial.setHeading(90 * allianceColor, degrees);
-        pistonClamp.set(false);
-        driveFor(-19, 3000);
-        wait(100, msec);
-        driveFor(2.5, 1000);
-        wait(100, msec);
-        turnTo(-12 * allianceColor, 3000);
-        wait(100, msec);
-        driveFor(-8, 2000, 40.0);
-        wait(150, msec);
+        // Route 1: The positive/simple side (WIP)
+        Drivetrain.setHeading(180, degrees);
+        driveFor(-32, 3000);
+        turnFor(-90 * allianceColor, 2000, 70.0);
         conveyor.spin(forward);
-        wait(600, msec);
-        conveyor.stop();
-        driveFor(9, 2000);
-        turnTo(-135 * allianceColor, 2000);
-        driveFor(-36);
-        pistonClamp.set(true);
-        turnTo(95 * allianceColor, 3000);
         intake.spin(forward);
-        conveyor.spin(forward);
-        driveFor(18, 2000);
+        driveFor(9, 1000);
+        wait(500, msec);
+        turnFor(-116.57, 2000);
+        driveFor(51.67, 4000);
+        colorSortAuton();
+        driveFor(2, 1000);
         wait(1000, msec);
-        intake.stop();
-        conveyor.stop();
-        if (autonWinPoint) {
-            turnTo(-90 * allianceColor, 3000, 100);
-            driveFor(33, 4000, 100);
-        } else {
-            turnFor(135 * allianceColor, 3000);
-            driveFor(30, 5000);
-            turnFor(45 * allianceColor, 3000);
-            pistonSweeper.set(true);
-        } 
+        turnFor(116.57, 2000);
+        wait(100, msec);
+        driveFor(9, 1000);
     } else if (autonomousRoute == 2) {
-        // Route 2: The negative side (complex route)
-        pistonClamp.set(false);
-        Drivetrain.setDriveVelocity(60, percent);
-        Drivetrain.driveFor(-26, inches);
-        pistonClamp.set(true);
-        wait(100, msec);
-        Drivetrain.turnFor(87 * allianceColor, degrees);
-        wait(100, msec);
-        intake.spin(forward);
-        conveyor.spin(forward);
-        Drivetrain.driveFor(26, inches);
-        wait(100, msec);
-        Drivetrain.turnFor(75 * allianceColor, degrees);
-        wait(100, msec);
-        Drivetrain.setDriveVelocity(60, percent);
-        Drivetrain.driveFor(9.5, inches);
-        wait(600, msec);
-        Drivetrain.driveFor(-6, inches);
-        wait(100, msec);
-        Drivetrain.turnFor(26 * allianceColor, degrees);
-        wait(100, msec);
-        Drivetrain.driveFor(5.75, inches);
-        wait(600, msec);
-        Drivetrain.setDriveVelocity(100, percent);
-        Drivetrain.setTimeout(5000, msec);
-        Drivetrain.turnFor(77 * allianceColor, degrees);
-        wait(100, msec);
-        intake.stop();
-        conveyor.stop();
-        Drivetrain.setTimeout(5000, msec);
-        Drivetrain.driveFor(40, inches);
+        // Route 2: The negative/coomplex side (WIP)
+        
     } else if (autonomousRoute == 3)  {
         // Does nothing
         wait(15, seconds);
-    } else if (autonomousRoute == 4) {
-        // Route 4: The positive side (simple route v1)
-        pistonClamp.set(false);
-        Drivetrain.driveFor(-32, inches);
-        pistonClamp.set(true);
-        wait(250, msec);
-        conveyor.spin(forward);
-        Drivetrain.setTimeout(3000, msec);
-        Drivetrain.turnFor(-90 * allianceColor, degrees);
-        intake.spin(forward);
-        wait(100, msec);
-        Drivetrain.setTimeout(3000, msec);
-        Drivetrain.driveFor(22, inches);
-        wait(750, msec);
-        intake.stop();
-        Drivetrain.setTimeout(5000, msec);
-        Drivetrain.turnToHeading(90 * allianceColor, degrees);
-        wait(100, msec);
-        Drivetrain.setDriveVelocity(90, percent);
-        Drivetrain.setTimeout(2000, msec);
-        Drivetrain.driveFor(26, inches);
-        Drivetrain.setDriveVelocity(30, percent);
-        Drivetrain.setTimeout(2000, msec);
-        Drivetrain.driveFor(18, inches);
     } else {
         // Default case if not in range
         Brain.Screen.print("No autonomous route found");
     }
-
-    intake.stop();
-    conveyor.stop();
 }
 
 /**
  * Handles the control of the drivetrain based on the controller's input.
  *
- * If the L2 button is pressed, the drivetrain control type will switch between tank and arcade.
  * If the drivetrain is in tank mode, the left side of the drivetrain will be controlled by the left joystick's Y-axis,
  * and the right side of the drivetrain will be controlled by the right joystick's Y-axis.
  * If the drivetrain is in arcade mode, the left joystick's Y-axis will control the speed of both sides of the drivetrain,
@@ -287,14 +224,6 @@ void controlDrivetrain() {
     // Function to handle drivetrain control type
     int drivetrainLeftSideSpeed = 0, drivetrainRightSideSpeed = 0;
 
-    if (drivetrainSwitchEnabled) {
-        static bool lastButtonStateDrive = true;  // Track the previous state of the button
-        bool currentButtonStateDrive = Controller.ButtonL2.pressing();
-
-        if (currentButtonStateDrive && !lastButtonStateDrive)           // Detect button press
-            drivetrainMode = (drivetrainMode == TANK) ? ARCADE : TANK;  // Toggle the drivetrain mode
-        lastButtonStateDrive = currentButtonStateDrive;                 // Update the previous state
-    }
     if (drivetrainMode == TANK) {
         drivetrainLeftSideSpeed = Controller.Axis3.position();
         drivetrainRightSideSpeed = Controller.Axis2.position();
@@ -321,7 +250,7 @@ void controlDrivetrain() {
 }
 
 /**
- * Toggles the piston state each time the L1 button is pressed.
+ * Toggles the piston state each time the A button is pressed.
  *
  * @note Uses a static variable to track the previous state of the button.
  */
@@ -337,6 +266,11 @@ void controlPistonClamp() {
     lastButtonAState = currentButtonAState;  // Update the previous state
 }
 
+/**
+ * Toggles the piston state each time the B button is pressed.
+ *
+ * @note Uses a static variable to track the previous state of the button.
+ */
 void controlPistonSweeper() {
     static bool lastButtonBState = false;  // Track the previous state of the button
     bool currentButtonBState = Controller.ButtonB.pressing();
@@ -355,10 +289,6 @@ void controlPistonSweeper() {
  *
  * If R1 is pressed, the intake and conveyor motors spin forward.
  * If R2 is pressed, the intake and conveyor motors spin reverse.
- * If the Up button is pressed, the conveyor motor spins forward.
- * If the Down button is pressed, the conveyor motor spins reverse.
- * If the X button is pressed, the intake motor spins forward.
- * If the B button is pressed, the intake motor spins reverse.
  *
  * Otherwise, the motors will stop if they are not already stopped.
  */
@@ -387,61 +317,41 @@ void controlIntakeAndConveyor() {
         if (!intakeActive)
             intake.stop();
     } else {
-        wait(20, msec);
+        // Do nothing
     }
 }
 
 /**
  * Handles the control of the wall stake arm based on the controller's input.
  *
- * If the A button is pressed, the wall stake arm spins forward when the rotaiton is less than the max wall stake position.
- * If the Y button is pressed, the wall stake arm spins reverse.
+ * If the L1 button is pressed, the wall stake arm spins forward.
+ * If the L2 button is pressed, the wall stake arm spins reverse.
  *
  * Otherwise, the wall stake arm will stop if it is not already stopped.
  */
 
 
-
-void controlWallStakeArm() {
+void controlLadyBrown() {
     if (Controller.ButtonL1.pressing())
-        wallStakeArm.spin(forward);
+        ladyBrown.spin(forward);
     else if (Controller.ButtonL2.pressing())
-        wallStakeArm.spin(reverse);
+        ladyBrown.spin(reverse);
     else
-        wallStakeArm.stop();
+        ladyBrown.stop();
 }
 
-void colorSort() {
-    if (colorSortEnabled) {
-        Optical.setLight(ledState::on);
- 
-        if (Optical.color() == color::red && Optical.isNearObject()) {
-            opticalColor = 1;
-        } else if (Optical.color() == color::blue && Optical.isNearObject()) {
-            opticalColor = -1;
-        } else {
-            opticalColor = 0;
-        }
-
-        if (opticalColor == 1 && allianceColor != 1) {
-            conveyorManual = false;
-            conveyor.spinFor(forward, colorSortTime, msec);
-            conveyor.stop();
-            wait(500, msec);
-            conveyorManual = true;
-        } else if (opticalColor == -1 && allianceColor != -1) {
-            conveyorManual = false;
-            conveyor.spinFor(forward, colorSortTime, msec);
-            conveyor.stop();
-            wait(500, msec);
-            conveyorManual = true;
-        } else {
-            wait(20, msec);
-        }
-    } else {
-        wait(20, msec);
+void controlLadyBrownMacro() {
+    if (Controller.ButtonX.pressing()) {
+        ladyBrown.spinToPosition(ladyBrownMacroDegrees, degrees);
     }
 }
+
+
+/**
+ * Toggles color sort each time the left arrow button is pressed.
+ *
+ * @note Uses a static variable to track the previous state of the button.
+ */
 
 void enableDisableColorSort() {
     static bool lastButtonLeftArrowState = true;  // Track the previous state of the button
@@ -472,8 +382,8 @@ int teleopLoop() {
         controlIntakeAndConveyor();
         controlPistonClamp();
         controlPistonSweeper();
-        controlWallStakeArm();
-        colorSort();
+        controlLadyBrown();
+        controlLadyBrownMacro();
         enableDisableColorSort();
         wait(20, msec);
     }
@@ -518,6 +428,72 @@ int stuckHelperLoop() {
 }
 
 /**
+ * Sorts the rigns based on their color using the optical sensor.
+ *
+ * If the color of the detected ring is different from the alliance color, the conveyor will spin for a certain amount of time,
+ * trying to launch it.
+ *
+ * Otherwise, the conveyor will continue manual control.
+ */
+
+int colorSortLoop() {
+    while(true) {
+
+        if (colorSortEnabled) {
+            Optical.setLight(ledState::on);
+            
+            if (Optical.color() == color::red && Optical.isNearObject()) {
+                opticalColor = 1;
+            } else if (Optical.color() == color::blue && Optical.isNearObject()) {
+                opticalColor = -1;
+            } else {
+                opticalColor = 0;
+            }
+
+            if (opticalColor == 1 && allianceColor != 1) {
+                conveyorManual = false;
+                conveyor.spinFor(forward, colorSortTime, msec);
+                conveyor.stop();
+                wait(500, msec);
+                conveyorManual = true;
+            } else if (opticalColor == -1 && allianceColor != -1) {
+                conveyorManual = false;
+                conveyor.spinFor(forward, colorSortTime, msec);
+                conveyor.stop();
+                wait(500, msec);
+                conveyorManual = true;
+            } else {
+                // Do nothing
+            }
+        } else {
+            Optical.setLight(ledState::off);
+        }
+
+    }
+
+    return 0;
+}
+
+int resetLadyBrownDegreesLoop() {
+    unsigned short ladyBrownCounter = 0;
+
+    while (true) {
+        if (ladyBrown.velocity(rpm) < ladyBrownStuckVelocity && ladyBrown.current() >= ladyBrownStuckCurrent)
+            ladyBrownCounter += 1;
+        else
+            ladyBrownCounter = 0;
+
+        if (ladyBrownCounter >= ladyBrownStuckLimit && ladyBrown.position(degrees) < 30) {
+            ladyBrown.setPosition(0, degrees);
+            ladyBrownCounter = 0;
+        }
+        wait(20, msec);
+    }
+    return 0;
+}
+
+
+/**
  * Continuously prints information about the robot's brain and drivetrain to the screen.
  *
  * @return 0 if infoCodeEnabled is false
@@ -531,16 +507,18 @@ int infoLoop() {
         Brain.Screen.clearScreen();
         Brain.Screen.setCursor(1, 1);
 
-        double infoToPrint[] = {
-            static_cast<double>(Inertial.yaw()),
-            static_cast<double>(opticalColor),
-        };
-
-        // Iterate over the array and print each value
-        for (double info : infoToPrint) {
-            Brain.Screen.print(info);
-            Brain.Screen.newLine();
+        Brain.Screen.print("Yaw:");
+        Brain.Screen.print(Inertial.yaw());
+        Brain.Screen.newLine();
+        Brain.Screen.print("Optical Color:");
+        if (opticalColor == 1) {
+            Brain.Screen.print("Red");
+        } else if (opticalColor == -1) {
+            Brain.Screen.print("Blue");
+        } else {
+            Brain.Screen.print("Not blue nor red");
         }
+        Brain.Screen.newLine();
 
         Brain.Screen.render();
 
@@ -565,6 +543,8 @@ void driverControl(void) {
     task teleopTask(teleopLoop);
     task stuckHelperTask(stuckHelperLoop);
     task infoTask(infoLoop);
+    task colorSortTask(colorSortLoop);
+    task resetLadyBrownDegreesTask(resetLadyBrownDegreesLoop);
 }
 
 int main() {
