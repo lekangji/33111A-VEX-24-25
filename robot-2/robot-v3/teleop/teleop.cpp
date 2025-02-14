@@ -31,10 +31,10 @@ motor rightMotor3 = motor(PORT2, ratio6_1, true);
 motor_group rightDriveSmart = motor_group(rightMotor1, rightMotor2, rightMotor3);
 
 // Defining the inertial sensor
-inertial Inertial = inertial(PORT15); 
+inertial Inertial = inertial(PORT4); 
 
 // left motor, right motor, wheelTravel (circumfrence of wheels), drivetrainInertial, trackWidth, wheelBase, units, gearRatio
-smartdrive Drivetrain = smartdrive(leftDriveSmart, rightDriveSmart, Inertial, 259.338473554, 323.85, 254.0, mm, 2/3);
+smartdrive Drivetrain = smartdrive(leftDriveSmart, rightDriveSmart, Inertial, 259.338473554, 323.85, 254.0, mm, 0.666667);
 
 // Defining the optical sensor
 optical Optical = optical(PORT21);
@@ -56,6 +56,7 @@ bool infoCodeEnabled = true;
 bool drivetrainSwitchEnabled = false;
 bool autonomousCodeEnabled = true;
 bool conveyorManual = true;
+bool ladyBrownManual = true;
 
 // Color Sort Stuff
 double opticalColor;
@@ -63,7 +64,7 @@ int colorSortTime = 220;
 bool colorSortEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 3;  // 0 = testing, 1 = positive, 2 = negative (complex), 3 = do nothing
+unsigned short autonomousRoute = 1;  // 0 = testing, 1 = positive, 2 = negative (complex), 3 = do nothing
 short allianceColor = -1;          // Let 1 be red and -1 be blue
 bool autonWinPoint = true;
 
@@ -97,11 +98,11 @@ const float ladyBrownStuckCurrent = 2;
 const unsigned short ladyBrownStuckVelocity = 5;
 
 // Other stuff
-const unsigned short ladyBrownMacroDegrees = 135;
+unsigned short ladyBrownMacroDegrees = 135;
 
 // Defining speed constants
 const int DEFAULT_DRIVE_VELOCITY = 85.0;
-const int DEFAULT_TURN_VELOCITY = 70.0;
+const int DEFAULT_TURN_VELOCITY = 60.0;
 
 // Definitng drive and turn functions
 void resetDrive() {
@@ -124,12 +125,12 @@ void turnFor(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY
     resetDrive();
 }
 
-void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY, bool waitUntilDone = true) {
-    Drivetrain.setTurnVelocity(speed, percent);
-    Drivetrain.setTimeout(timeout, msec);
-    Drivetrain.turnToHeading(angle, degrees, waitUntilDone);
-    resetDrive();
-}
+// void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY, bool waitUntilDone = true) {
+//     Drivetrain.setTurnVelocity(speed, percent);
+//     Drivetrain.setTimeout(timeout, msec);
+//     Drivetrain.turnToHeading(angle, degrees, waitUntilDone);
+//     resetDrive();
+// }
 
 /**
  * Initializes the robot's systems before the competition starts.
@@ -139,9 +140,11 @@ void turnTo(double angle, int timeout = 0, double speed = DEFAULT_TURN_VELOCITY,
  */
 void initalize(bool onlyMotors = false) {
     // All activities that occur before the competition starts.
-    Drivetrain.setDriveVelocity(100, percent);
-    Drivetrain.setTurnVelocity(100, percent);
+    
+    // Drivetrain.setDriveVelocity(50);
+    // Drivetrain.setTurnVelocity(50);
     Drivetrain.setStopping(coast);
+    Drivetrain.setTurnThreshold(5);
 
     conveyor.setVelocity(100, percent);
     conveyor.setMaxTorque(100, percent);
@@ -166,6 +169,8 @@ void initalize(bool onlyMotors = false) {
     while (Inertial.isCalibrating()) {
         wait(100, msec);
     }
+
+    Brain.Screen.print("Initialized.");
 }
 
 /**
@@ -173,31 +178,29 @@ void initalize(bool onlyMotors = false) {
  *
  * @return None
  */
-void autonomous(void) {
+void myAutonomous(void) {
     if (!autonomousCodeEnabled)
         return;
 
     // Autonomous
     if (autonomousRoute == 0) {
-        // Route 0: Testing purposes only
-        driveFor(12, 3000);
+        // Route 0: Testing purposes only8
+        Brain.Screen.print("Auton Route 0 is running.");
+        Drivetrain.setDriveVelocity(50, percent);
+        Drivetrain.drive(forward);
+        wait(1, seconds);
+        Drivetrain.stop();
+        Brain.Screen.print(Drivetrain.velocity(percent));
+        Drivetrain.stop();
     } else if (autonomousRoute == 1) {
         // Route 1: The positive/simple side (WIP)
-        Drivetrain.setHeading(180, degrees);
-        driveFor(-32, 3000);
-        turnFor(-90 * allianceColor, 2000, 70.0);
-        conveyor.spin(forward);
-        intake.spin(forward);
-        driveFor(9, 1000);
-        wait(500, msec);
-        turnFor(-116.57, 2000);
-        driveFor(51.67, 4000);
-        colorSortAuton();
-        driveFor(2, 1000);
-        wait(1000, msec);
-        turnFor(116.57, 2000);
+        // driveFor(-42, 4000, 50.0);
+        // driveFor(-6, 1000, 10.0);
+        // wait(500, msec);
+
+        pistonClamp.set(true);
         wait(100, msec);
-        driveFor(9, 1000);
+        turnFor(allianceColor * -45, 3000, 10.0);
     } else if (autonomousRoute == 2) {
         // Route 2: The negative/coomplex side (WIP)
         
@@ -332,17 +335,16 @@ void controlIntakeAndConveyor() {
 
 
 void controlLadyBrown() {
-    if (Controller.ButtonL1.pressing())
-        ladyBrown.spin(forward);
-    else if (Controller.ButtonL2.pressing())
-        ladyBrown.spin(reverse);
-    else
-        ladyBrown.stop();
-}
-
-void controlLadyBrownMacro() {
-    if (Controller.ButtonX.pressing()) {
-        ladyBrown.spinToPosition(ladyBrownMacroDegrees, degrees);
+    if (ladyBrownManual) {
+        if (Controller.ButtonL1.pressing()) {
+            ladyBrown.spin(forward);
+        } else if (Controller.ButtonL2.pressing()) {
+            ladyBrown.spin(reverse);
+        } else {
+            ladyBrown.stop();
+        }
+    } else {
+        // Do nothing
     }
 }
 
@@ -382,12 +384,30 @@ int teleopLoop() {
         controlIntakeAndConveyor();
         controlPistonClamp();
         controlPistonSweeper();
-        controlLadyBrown();
-        controlLadyBrownMacro();
+        controlLadyBrown();;
         enableDisableColorSort();
         wait(20, msec);
     }
 }
+
+/**
+ * Spins the lady brown motor to a certain position when the X button is pressed.
+ */
+int ladyBrownMacroLoop() {
+    while(true) {
+        if (Controller.ButtonX.pressing()) {
+            ladyBrownManual = false;
+            ladyBrown.spinTo(ladyBrownMacroDegrees, degrees);
+        } else {
+            ladyBrownManual = true;
+        }
+
+        wait(20, msec);
+    }
+    
+    return 0;
+}
+
 
 /**
  * Continuously checks the conveyor's velocity and current,
@@ -519,6 +539,8 @@ int infoLoop() {
             Brain.Screen.print("Not blue nor red");
         }
         Brain.Screen.newLine();
+        Brain.Screen.print("X Button is Pressed?");
+        Brain.Screen.print(Controller.ButtonX.pressing());
 
         Brain.Screen.render();
 
@@ -545,15 +567,17 @@ void driverControl(void) {
     task infoTask(infoLoop);
     task colorSortTask(colorSortLoop);
     task resetLadyBrownDegreesTask(resetLadyBrownDegreesLoop);
+    task ladyBrownMacroTask(ladyBrownMacroLoop);
 }
 
 int main() {
     // Run the pre-autonomous function.
     initalize();
 
+    myAutonomous();
     // Set up callbacks for autonomous and driver control periods.
-    Competition.autonomous(autonomous);
-    Competition.drivercontrol(driverControl);
+    // Competition.autonomous(myAutonomous);
+    // Competition.drivercontrol(driverControl);
 
     // Prevent main from exiting with an infinite loop
     while (true) {
