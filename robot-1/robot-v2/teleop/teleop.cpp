@@ -50,7 +50,7 @@ bool drivetrainSwitchEnabled = true;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 2;  // 0 = nothing, 1 = positive (simple), 2 = negative (complex), 3 = positive side stake rush
+unsigned short autonomousRoute = 3;  // 0 = nothing, 1 = positive (simple), 2 = negative (complex), 3 = positive side stake rush
 short teamColor = -1;                // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
@@ -230,17 +230,29 @@ void autonomous(void) {
         intake.spin(forward);
         wait(100, msec);
         Drivetrain.setTimeout(3000, msec);
-        Drivetrain.driveFor(26, inches);
-        wait(300, msec);
-        Drivetrain.setTimeout(4000, msec);
-        Drivetrain.turnToHeading(0, degrees);
+        Drivetrain.driveFor(20, inches);
+
+        // Let go of old goal
         piston.set(false);
+        wait(500, msec);
+        Drivetrain.driveFor(5, inches);
+
+        intake.stop();
+        conveyor.stop();  // We let go of goal, make sure the ring doesn't drop
+
+        // Turn to grab new goal
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.turnToHeading(0, degrees);
         wait(100, msec);
         // Now drive reverse to get goal
-        Drivetrain.driveFor(-24, inches);
+        Drivetrain.driveFor(-22, inches);
         piston.set(true);
         wait(100, msec);
-        Drivetrain.driveFor(20, inches);
+        // Continue spinning after grabbing new goal
+        intake.spin(forward);
+        conveyor.spin(forward);
+        Drivetrain.driveFor(30, inches);
+        Drivetrain.turnToHeading(-180 * teamColor, degrees);
     } else {
         // Default case if not in range
         printf("No autonomous route found");
