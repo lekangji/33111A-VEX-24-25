@@ -50,8 +50,8 @@ bool drivetrainSwitchEnabled = true;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 1;  // 0 = testing, 1 = positive (simple), 2 = negative (complex), 3 = do nothing
-short teamColor = 1;                 // Let 1 be red and -1 be blue
+unsigned short autonomousRoute = 2;  // 0 = nothing, 1 = positive (simple), 2 = negative (complex), 3 = positive side stake rush
+short teamColor = -1;                // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
 
@@ -95,18 +95,24 @@ void initalize(bool onlyMotors = false) {
     Drivetrain.setDriveVelocity(100, percent);
     Drivetrain.setTurnVelocity(100, percent);
     Drivetrain.setStopping(coast);
+    Drivetrain.setTimeout(0, seconds);
+    Drivetrain.stop();
     conveyor.setVelocity(80, percent);
     conveyor.setMaxTorque(100, percent);
     conveyor.setStopping(coast);
+    conveyor.stop();
     intake.setVelocity(100, percent);
     intake.setMaxTorque(100, percent);
     intake.setStopping(coast);
+    intake.stop();
     wallStakeArm.setVelocity(50, percent);
     wallStakeArm.setMaxTorque(100, percent);
     wallStakeArm.setStopping(hold);
+    wallStakeArm.stop();
     sweeperArm.setVelocity(25, percent);
     sweeperArm.setMaxTorque(100, percent);
     sweeperArm.setStopping(hold);
+    sweeperArm.stop();
 
     if (onlyMotors) return;
 
@@ -140,26 +146,23 @@ void autonomous(void) {
     Drivetrain.setDriveVelocity(75, percent);
     Drivetrain.setTurnVelocity(50, percent);
     Drivetrain.setHeading(0, degrees);
-    conveyor.setVelocity(80, percent);
-    intake.setVelocity(80, percent);
 
     wallStakeArm.setPosition(0, degrees);
     wallStakeArm.spinFor(startWallStakeArmPosition, degrees, false);
 
     // Autonomous
     if (autonomousRoute == 0) {
-        // Route 0: Testing purposes only
-        Drivetrain.driveFor(24, inches);
-        Drivetrain.turnFor(90, degrees);
+        // Route 0: Do nothing for autonomous
+        wait(15, seconds);
     } else if (autonomousRoute == 1) {
         // Route 1: The positive side (simple route)
-        printf("Running simple route");
+        printf("Route 1: Running positive side simple route");
 
         piston.set(false);
-        Drivetrain.driveFor(-44, inches);
+        Drivetrain.driveFor(-40, inches);
         piston.set(true);
         wait(100, msec);
-        Drivetrain.driveFor(8, inches);
+        Drivetrain.driveFor(4, inches);
         conveyor.spin(forward);
         Drivetrain.setTimeout(3000, msec);
         Drivetrain.turnToHeading(-90 * teamColor, degrees);
@@ -172,6 +175,7 @@ void autonomous(void) {
         Drivetrain.turnToHeading(90 * teamColor, degrees);
         wait(100, msec);
         intake.stop();
+        // Drive to touch ladder
         Drivetrain.setDriveVelocity(90, percent);
         Drivetrain.setTimeout(2000, msec);
         Drivetrain.driveFor(32, inches);
@@ -180,46 +184,67 @@ void autonomous(void) {
         Drivetrain.driveFor(18, inches);
     } else if (autonomousRoute == 2) {
         // Route 2: The negative side (complex route)
-        printf("Running complex route");
+        printf("Route 2: Running negative complex route");
 
         piston.set(false);
         Drivetrain.driveFor(-40, inches);
         piston.set(true);
-        wait(250, msec);
+        wait(100, msec);
+        Drivetrain.driveFor(4, inches);
         Drivetrain.setTimeout(3000, msec);
         Drivetrain.turnToHeading(90 * teamColor, degrees);
         wait(100, msec);
         intake.spin(forward);
         conveyor.spin(forward);
-        Drivetrain.driveFor(26, inches);
+        Drivetrain.driveFor(28, inches);
         wait(250, msec);
-        Drivetrain.turnFor(80 * teamColor, degrees);
+        Drivetrain.turnToHeading(-165 * teamColor, degrees);
         wait(100, msec);
         Drivetrain.driveFor(12, inches);
         wait(800, msec);
         Drivetrain.driveFor(-8, inches);
         wait(100, msec);
-        Drivetrain.turnFor(25 * teamColor, degrees);
+        Drivetrain.turnFor(-25 * teamColor, degrees);
         wait(100, msec);
-        Drivetrain.driveFor(10, inches);
+        Drivetrain.driveFor(11, inches);
         wait(1000, msec);
-        Drivetrain.setTimeout(1, seconds);
-        Drivetrain.turnFor(-45 * teamColor, degrees);
+        Drivetrain.driveFor(-8, inches);
+        Drivetrain.turnToHeading(-63 * teamColor, degrees);
         wait(100, msec);
         Drivetrain.setTimeout(2500, msec);
-        Drivetrain.driveFor(-45, inches);
-        Drivetrain.turnFor(75 * teamColor, degrees);
-        Drivetrain.setTimeout(1, seconds);
-        Drivetrain.driveFor(14, inches);
+        Drivetrain.driveFor(45, inches);
+        Drivetrain.setDriveVelocity(30, percent);
+        Drivetrain.driveFor(15, inches);
     } else if (autonomousRoute == 3) {
-        wait(15, seconds);
+        // Route 3: Positive side stake rush
+        printf("Route 3: Running positive side stake rush");
+
+        piston.set(false);
+        Drivetrain.driveFor(-40, inches);
+        piston.set(true);
+        wait(100, msec);
+        Drivetrain.driveFor(4, inches);
+        conveyor.spin(forward);
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.turnToHeading(-90 * teamColor, degrees);
+        intake.spin(forward);
+        wait(100, msec);
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.driveFor(26, inches);
+        wait(300, msec);
+        Drivetrain.setTimeout(4000, msec);
+        Drivetrain.turnToHeading(0, degrees);
+        piston.set(false);
+        wait(100, msec);
+        // Now drive reverse to get goal
+        Drivetrain.driveFor(-24, inches);
+        piston.set(true);
+        wait(100, msec);
+        Drivetrain.driveFor(20, inches);
     } else {
         // Default case if not in range
-        Brain.Screen.print("No autonomous route found");
+        printf("No autonomous route found");
     }
-
-    intake.stop();
-    conveyor.stop();
 }
 
 /**
@@ -507,11 +532,9 @@ int infoLoop() {
  */
 void driverControl(void) {
     // Setup for motors (in case autonomous does not finish in time)
-    Drivetrain.setTimeout(0, seconds);
-    Drivetrain.setStopping(coast);
     initalize(true);  // Only reset motors
 
-    // Controller.rumble(". . . -");
+    // Controller.rumble(".");
 
     task teleopTask(teleopLoop);
     task stuckHelperTask(stuckHelperLoop);
