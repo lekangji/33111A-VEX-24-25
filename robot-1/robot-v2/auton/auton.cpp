@@ -133,7 +133,7 @@ void stopConveyor() {
 }
 
 void autonomous(void) {
-    printf("\n\n\033[31m====Autonomous started====\n");
+    printf("\033[31m====Autonomous started====\n");
     wallStakeArm.spinFor(260, degrees, false);
     Drivetrain.setHeading(33, degrees);
 
@@ -174,21 +174,13 @@ void autonomous(void) {
     turnTo(169, 2500, 30);  // Angle to correct place to pick up that ring
     printf("\033[31m====So far away====\n");
     driveFor(84, 10000, 80);  // Drive to the ring (90)
-    turnTo(-130);
-    stopConveyor();  // Once picking it up, stop conveyor to not lose the ring
-    driveFor(34, 2000, 30);
-    stopIntake();  // Ok, now we can stop the intake
-
-    printf("\033[31m====Pushing Goal (1)====\n");
-    turnTo(89, 3000, 30);      // Turn to goal angle
-    driveFor(-58, 4000, 100);  // Push the goal into the corner
-
-    printf("\033[31m====Goal 1 Placed, Pushing Goal (2)====\n");
-    driveFor(10, 1000);     // Get a little away from the wall
-    turnTo(-89, 3000, 30);  // Turn to next goal
-    driveFor(-70, 9000);    // Push goal into the corner
-
-    printf("\033[31m====Goal 2 placed====\n");
+    stopConveyor();           // Once picking it up, stop conveyor to not lose the ring
+    printf("\033[31m====Turn to pick up goal====\n");
+    turnTo(-68, 9000, 30);     // Turn to goal angle
+    stopIntake();              // Ok, now we can stop the intake
+    driveFor(-56, 5000, 100);  // Go to the next goal
+    printf("\033[31m====Grabbing goal 🙏 pls work====\n");
+    piston.set(true);  // Grabbed the next goal
 
     // Now we can start spinning
     spinIntake(forward);
@@ -198,16 +190,16 @@ void autonomous(void) {
     turnTo(30, 2000);      // Turn to face first ring
     driveFor(28, 3500);    // Drive to first ring
     wait(500, msec);       // Wait for intake
-    turnTo(90, 3000, 35);  // Turn to next ring
-    driveFor(23, 3500);    // Drive to next ring
+    turnTo(90, 2000, 35);  // Turn to next ring
+    driveFor(24, 3500);    // Drive to next ring
     wait(500, msec);       // Wait for intake
 
     // Drive all the way down the field
     printf("\033[31m====Driving down the field====\n");
-    turnTo(0, 2500, 30);
-    driveFor(84, 7000);
+    turnTo(0, 4500, 25);
+    driveFor(84, 9000, 50);
     wait(1500, msec);
-    driveFor(-10, 1500);
+    driveFor(-12, 1500);
     // Time to shove goal in corner
     printf("\033[31m====Shoving goal 2 in corner====\n");
     turnTo(-135, 5000);
@@ -223,9 +215,7 @@ void autonomous(void) {
     turnTo(-140, 1000);
     spinIntake(forward);
     wait(250, msec);
-    driveFor(38, 2000);
-    turnTo(-90, 2000);
-    driveFor(10, 1000);
+    driveFor(42, 2000);
     wait(500, msec);
     turnTo(180, 2000);
     driveFor(-24, 2000);
