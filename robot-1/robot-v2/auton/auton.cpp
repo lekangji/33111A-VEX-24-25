@@ -59,12 +59,12 @@ double intakeVelocity = defaultIntakeVelocity;
 const unsigned short conveyorReverseTime = 1000;  // The time the conveyor will reverse for when stuck in msec
 const unsigned short conveyorStuckVelocity = 5;   // The velocity below this will trigger the counter (in rpm)
 const float conveyorStuckCurrent = 2;             // The amount of current that will trigger the counter (in amps)
-const unsigned short conveyorStuckLimit = 15;     // The counter limit before reversing (in loops)
+const unsigned short conveyorStuckLimit = 20;     // The counter limit before reversing (in loops)
 
 const unsigned short intakeReverseTime = 300;  // The time the conveyor will reverse for when stuck in msec
 const unsigned short intakeStuckVelocity = 5;  // The velocity below this will trigger the counter (in rpm)
 const float intakeStuckCurrent = 2;            // The amount of current that will trigger the counter (in amps)
-const unsigned short intakeStuckLimit = 15;    // The counter limit before reversing (in loops)
+const unsigned short intakeStuckLimit = 20;    // The counter limit before reversing (in loops)
 
 void resetDrive() {
     Drivetrain.setDriveVelocity(defaultDriveVelocity, percent);
@@ -190,13 +190,13 @@ void autonomous(void) {
     turnTo(30, 2000);      // Turn to face first ring
     driveFor(28, 3500);    // Drive to first ring
     wait(500, msec);       // Wait for intake
-    turnTo(90, 2000, 35);  // Turn to next ring
-    driveFor(24, 3500);    // Drive to next ring
+    turnTo(87, 3500, 35);  // Turn to next ring
+    driveFor(27, 3500);    // Drive to next ring
     wait(500, msec);       // Wait for intake
 
     // Drive all the way down the field
     printf("\033[31m====Driving down the field====\n");
-    turnTo(0, 4500, 25);
+    turnTo(3, 4500, 25);
     driveFor(84, 9000, 50);
     wait(1500, msec);
     driveFor(-12, 1500);
