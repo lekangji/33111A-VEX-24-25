@@ -50,24 +50,10 @@ bool drivetrainSwitchEnabled = true;
 bool autonomousCodeEnabled = true;
 
 // Variables for autonomous
-unsigned short autonomousRoute = 3;  // 0 = nothing, 1 = positive (simple), 2 = negative (complex), 3 = positive side stake rush
-short teamColor = -1;                // Let 1 be red and -1 be blue
+unsigned short autonomousRoute = 2;  // 0 = nothing, 1 = positive (simple), 2 = negative (complex), 3 = positive side stake rush
+short teamColor = 1;                 // Let 1 be red and -1 be blue
 
 // Variables used for controlling motors and components
-
-// Drivetrain variables
-enum DrivetrainMode {
-    TANK,
-    ARCADE
-};
-DrivetrainMode drivetrainMode = ARCADE;  // Arcade by default
-
-// Control variables
-bool conveyorActive = false;
-bool intakeActive = false;
-bool drivetrainLNeedsToBeStopped = true;
-bool drivetrainRNeedsToBeStopped = true;
-bool pistonState = false;
 
 // Constants
 
@@ -84,8 +70,30 @@ const double startWallStakeArmPosition = 260;
 const double maxWallStakeArmPosition = 660;
 
 // Color sort variables
-unsigned short colorSortDelay = 330;  // Delay in ms for color sort
+unsigned short colorSortDelay = 350;  // Delay in ms for color sort
 bool conveyorManualControl = true;    // If false, conveyor is in the color sort
+
+// Default values for motors
+unsigned short defaultDrivetrainVelocity = 100;      // Default drivetrain velocity in percent
+unsigned short defaultDrivetrainTurnVelocity = 100;  // Default drivetrain turn velocity in percent
+unsigned short defaultConveyorVelocity = 80;         // Default conveyor velocity in percent
+unsigned short defaultIntakeVelocity = 100;          // Default intake velocity in percent
+unsigned short defaultWallStakeArmVelocity = 50;     // Default wall stake arm velocity in percent
+unsigned short defaultSweeperArmVelocity = 25;       // Default sweeper arm velocity in percent
+
+// Drivetrain variables
+enum DrivetrainMode {
+    TANK,
+    ARCADE
+};
+DrivetrainMode drivetrainMode = ARCADE;  // Arcade by default
+
+// Control variables
+short conveyorDirection = 0;
+short intakeDirection = 0;
+bool drivetrainLNeedsToBeStopped = true;
+bool drivetrainRNeedsToBeStopped = true;
+bool pistonState = false;
 
 /**
  * Initializes the robot's systems before the competition starts.
@@ -97,24 +105,24 @@ void initalize(bool onlyMotors = false) {
     // All activities that occur before the competition starts.
 
     // Set up motors
-    Drivetrain.setDriveVelocity(100, percent);
-    Drivetrain.setTurnVelocity(100, percent);
+    Drivetrain.setDriveVelocity(defaultDrivetrainVelocity, percent);
+    Drivetrain.setTurnVelocity(defaultDrivetrainTurnVelocity, percent);
     Drivetrain.setStopping(coast);
     Drivetrain.setTimeout(0, seconds);
     Drivetrain.stop();
-    conveyor.setVelocity(80, percent);
+    conveyor.setVelocity(defaultConveyorVelocity, percent);
     conveyor.setMaxTorque(100, percent);
     conveyor.setStopping(coast);
     conveyor.stop();
-    intake.setVelocity(100, percent);
+    intake.setVelocity(defaultIntakeVelocity, percent);
     intake.setMaxTorque(100, percent);
     intake.setStopping(coast);
     intake.stop();
-    wallStakeArm.setVelocity(50, percent);
+    wallStakeArm.setVelocity(defaultWallStakeArmVelocity, percent);
     wallStakeArm.setMaxTorque(100, percent);
     wallStakeArm.setStopping(hold);
     wallStakeArm.stop();
-    sweeperArm.setVelocity(25, percent);
+    sweeperArm.setVelocity(defaultSweeperArmVelocity, percent);
     sweeperArm.setMaxTorque(100, percent);
     sweeperArm.setStopping(hold);
     sweeperArm.stop();
@@ -124,148 +132,15 @@ void initalize(bool onlyMotors = false) {
     // Set up optical sensor
     Optical.gestureDisable();
     Optical.setLight(ledState::on);
-    Optical.setLightPower(50, percent);
-    Optical.integrationTime(100);  // Time in ms for sensor to collect data
-    Optical.objectDetectThreshold(150);
+    Optical.setLightPower(100, percent);
+    Optical.integrationTime(20);        // Time in ms for sensor to collect data
+    Optical.objectDetectThreshold(80);  // Lower numbers = requires closer object
 
     Brain.Screen.setFont(mono12);
 
     Inertial.calibrate();
     while (Inertial.isCalibrating()) {
         wait(100, msec);
-    }
-}
-
-/**
- * This function is used to control the robot during the autonomous phase of a VEX Competition.
- *
- * @return None
- */
-void autonomous(void) {
-    if (!autonomousCodeEnabled)
-        return;
-
-    // All activities that occur during the autonomous phase
-
-    // Setup motors
-    Drivetrain.setStopping(brake);
-    Drivetrain.setDriveVelocity(75, percent);
-    Drivetrain.setTurnVelocity(50, percent);
-    Drivetrain.setHeading(0, degrees);
-
-    wallStakeArm.setPosition(0, degrees);
-    wallStakeArm.spinFor(startWallStakeArmPosition, degrees, false);
-
-    // Autonomous
-    if (autonomousRoute == 0) {
-        // Route 0: Do nothing for autonomous
-        wait(15, seconds);
-    } else if (autonomousRoute == 1) {
-        // Route 1: The positive side (simple route)
-        printf("Route 1: Running positive side simple route");
-
-        piston.set(false);
-        Drivetrain.driveFor(-40, inches);
-        piston.set(true);
-        wait(100, msec);
-        Drivetrain.driveFor(4, inches);
-        conveyor.spin(forward);
-        Drivetrain.setTimeout(3000, msec);
-        Drivetrain.turnToHeading(-90 * teamColor, degrees);
-        intake.spin(forward);
-        wait(100, msec);
-        Drivetrain.setTimeout(3000, msec);
-        Drivetrain.driveFor(26, inches);
-        wait(300, msec);
-        Drivetrain.setTimeout(5000, msec);
-        Drivetrain.turnToHeading(90 * teamColor, degrees);
-        wait(100, msec);
-        intake.stop();
-        // Drive to touch ladder
-        Drivetrain.setDriveVelocity(90, percent);
-        Drivetrain.setTimeout(2000, msec);
-        Drivetrain.driveFor(32, inches);
-        Drivetrain.setDriveVelocity(30, percent);
-        Drivetrain.setTimeout(2000, msec);
-        Drivetrain.driveFor(18, inches);
-    } else if (autonomousRoute == 2) {
-        // Route 2: The negative side (complex route)
-        printf("Route 2: Running negative complex route");
-
-        piston.set(false);
-        Drivetrain.driveFor(-40, inches);
-        piston.set(true);
-        wait(100, msec);
-        Drivetrain.driveFor(4, inches);
-        Drivetrain.setTimeout(3000, msec);
-        Drivetrain.turnToHeading(90 * teamColor, degrees);
-        wait(100, msec);
-        intake.spin(forward);
-        conveyor.spin(forward);
-        Drivetrain.driveFor(28, inches);
-        wait(250, msec);
-        Drivetrain.turnToHeading(-165 * teamColor, degrees);
-        wait(100, msec);
-        Drivetrain.driveFor(12, inches);
-        wait(800, msec);
-        Drivetrain.driveFor(-8, inches);
-        wait(100, msec);
-        Drivetrain.turnFor(-25 * teamColor, degrees);
-        wait(100, msec);
-        Drivetrain.driveFor(11, inches);
-        wait(1000, msec);
-        Drivetrain.driveFor(-8, inches);
-        Drivetrain.turnToHeading(-63 * teamColor, degrees);
-        wait(100, msec);
-        Drivetrain.setTimeout(2500, msec);
-        Drivetrain.driveFor(45, inches);
-        Drivetrain.setDriveVelocity(30, percent);
-        Drivetrain.driveFor(15, inches);
-    } else if (autonomousRoute == 3) {
-        // Route 3: Positive side stake rush
-        printf("Route 3: Running positive side stake rush");
-
-        piston.set(false);
-        Drivetrain.driveFor(-40, inches);
-        piston.set(true);
-        wait(100, msec);
-        Drivetrain.driveFor(4, inches);
-        conveyor.spin(forward);
-        Drivetrain.setTimeout(3000, msec);
-        Drivetrain.turnToHeading(-90 * teamColor, degrees);
-        intake.spin(forward);
-        wait(100, msec);
-        Drivetrain.setTimeout(3000, msec);
-        Drivetrain.driveFor(20, inches);
-
-        // Let go of old goal
-        piston.set(false);
-        wait(500, msec);
-        Drivetrain.driveFor(5, inches);
-
-        intake.stop();
-        conveyor.stop();  // We let go of goal, make sure the ring doesn't drop
-
-        // Turn to grab new goal
-        Drivetrain.setTimeout(3000, msec);
-        Drivetrain.turnToHeading(0, degrees);
-        wait(100, msec);
-        // Now drive reverse to get goal
-        Drivetrain.driveFor(-14, inches);
-        Drivetrain.setDriveVelocity(40, percent);
-        Drivetrain.driveFor(-3, inches);
-
-        piston.set(true);
-        wait(100, msec);
-        // Continue spinning after grabbing new goal
-        intake.spin(forward);
-        conveyor.spin(forward);
-        Drivetrain.setDriveVelocity(80, percent);
-        Drivetrain.driveFor(30, inches);
-        Drivetrain.turnToHeading(-180 * teamColor, degrees);
-    } else {
-        // Default case if not in range
-        printf("No autonomous route found");
     }
 }
 
@@ -356,39 +231,39 @@ void controlIntakeAndConveyor() {
     if (Controller.ButtonR1.pressing()) {
         conveyor.spin(forward);
         intake.spin(forward);
-        conveyorActive = true;
-        intakeActive = true;
+        conveyorDirection = 1;
+        intakeDirection = 1;
     } else if (Controller.ButtonR2.pressing()) {
         conveyor.spin(reverse);
         intake.spin(reverse);
-        conveyorActive = true;
-        intakeActive = true;
+        conveyorDirection = -1;
+        intakeDirection = -1;
     } else {
         // Handle individual conveyor control
         if (Controller.ButtonUp.pressing()) {
             conveyor.spin(forward);
-            conveyorActive = true;
+            conveyorDirection = 1;
         } else if (Controller.ButtonDown.pressing()) {
             conveyor.spin(reverse);
-            conveyorActive = true;
+            conveyorDirection = -1;
         } else
-            conveyorActive = false;
+            conveyorDirection = 0;
 
         // Handle individual intake control
         if (Controller.ButtonX.pressing()) {
             intake.spin(forward);
-            intakeActive = true;
+            intakeDirection = 1;
         } else if (Controller.ButtonB.pressing()) {
             intake.spin(reverse);
-            intakeActive = true;
+            intakeDirection = -1;
         } else
-            intakeActive = false;
+            intakeDirection = 0;
     }
 
     // Stop conveyor and intake if no active command
-    if (!conveyorActive)
+    if (conveyorDirection == 0)
         conveyor.stop();
-    if (!intakeActive)
+    if (intakeDirection == 0)
         intake.stop();
 }
 
@@ -487,36 +362,40 @@ int stuckHelperLoop() {
 }
 
 int colorSortLoop() {
-    if (!colorSortCodeEnabled) {
-        Optical.setLight(ledState::off);
-        return 0;
-    }
-
     color opticalColor;
     while (true) {
-        if (Optical.isNearObject()) {
-            opticalColor = Optical.color();
-            if ((opticalColor == color::blue && teamColor == 1) || (opticalColor == color::red && teamColor == -1)) {
-                // We intaked an incorrect ring
-                conveyorManualControl = false;
-                bool startedActive = conveyorActive;
+        if (colorSortCodeEnabled) {
+            Optical.setLight(ledState::on);
+            if (Optical.isNearObject()) {
+                opticalColor = Optical.color();
+                if ((opticalColor == color::blue && teamColor == 1) || (opticalColor == color::red && teamColor == -1)) {
+                    // We intaked an incorrect ring
+                    conveyorManualControl = false;
 
-                Controller.rumble(".");
-                conveyor.stop();
-                conveyor.spinFor(forward, colorSortDelay, msec);
-                conveyor.spinFor(reverse, 100, msec);
-                wait(100, msec);
+                    Controller.rumble(".");
+                    conveyor.setVelocity(100, percent);
 
-                if (startedActive) {
-                    conveyor.spin(forward);  // We were already active, so we need to stop
-                } else {
-                    conveyor.stop();  // We were not active, so we need to stop
+                    conveyor.spinFor(forward, colorSortDelay, msec);
+                    conveyor.spinFor(reverse, 200, msec);
+                    wait(100, msec);
+
+                    conveyor.setVelocity(defaultConveyorVelocity, percent);
+                    if (conveyorDirection == 1)
+                        conveyor.spin(forward);
+                    else if (conveyorDirection == -1)
+                        conveyor.spin(reverse);
+                    else
+                        conveyor.stop();
+                    conveyorManualControl = true;
                 }
-                conveyorManualControl = true;
             }
+        } else {
+            // Turn off the optical sensor
+            Optical.setLight(ledState::off);
+            wait(200, msec);
         }
 
-        wait(100, msec);
+        wait(20, msec);
     }
     return 0;
 }
@@ -567,6 +446,141 @@ int infoLoop() {
 }
 
 /**
+ * This function is used to control the robot during the autonomous phase of a VEX Competition.
+ *
+ * @return None
+ */
+void autonomous(void) {
+    task colorSortTask(colorSortLoop);
+
+    if (!autonomousCodeEnabled)
+        return;
+
+    // All activities that occur during the autonomous phase
+
+    // Setup motors
+    Drivetrain.setStopping(brake);
+    Drivetrain.setDriveVelocity(75, percent);
+    Drivetrain.setTurnVelocity(50, percent);
+    Drivetrain.setHeading(0, degrees);
+
+    wallStakeArm.setPosition(0, degrees);
+    wallStakeArm.spinFor(startWallStakeArmPosition, degrees, false);
+
+    // Autonomous
+    if (autonomousRoute == 0) {
+        // Route 0: Do nothing for autonomous
+        wait(15, seconds);
+    } else if (autonomousRoute == 1) {
+        // Route 1: The positive side (simple route)
+        printf("Route 1: Running positive side simple route");
+
+        piston.set(false);
+        Drivetrain.driveFor(-40, inches);
+        piston.set(true);
+        wait(100, msec);
+        Drivetrain.driveFor(4, inches);
+        conveyor.spin(forward);
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.turnToHeading(-90 * teamColor, degrees);
+        intake.spin(forward);
+        wait(100, msec);
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.driveFor(25, inches);
+        wait(300, msec);
+        Drivetrain.setTimeout(5000, msec);
+        Drivetrain.turnToHeading(90 * teamColor, degrees);
+        wait(100, msec);
+        intake.stop();
+        // Drive to touch ladder
+        Drivetrain.setDriveVelocity(90, percent);
+        Drivetrain.setTimeout(2000, msec);
+        Drivetrain.driveFor(32, inches);
+        Drivetrain.setDriveVelocity(30, percent);
+        Drivetrain.setTimeout(2000, msec);
+        Drivetrain.driveFor(18, inches);
+    } else if (autonomousRoute == 2) {
+        // Route 2: The negative side (complex route)
+        printf("Route 2: Running negative complex route");
+
+        piston.set(false);
+        Drivetrain.driveFor(-40, inches);
+        piston.set(true);
+        wait(100, msec);
+        Drivetrain.driveFor(4, inches);
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.turnToHeading(90 * teamColor, degrees);
+        wait(100, msec);
+        intake.spin(forward);
+        conveyor.spin(forward);
+        Drivetrain.driveFor(26, inches);
+        wait(250, msec);
+        Drivetrain.turnToHeading(-165 * teamColor, degrees);
+        wait(100, msec);
+        Drivetrain.driveFor(12, inches);
+        wait(800, msec);
+        Drivetrain.driveFor(-8, inches);
+        wait(100, msec);
+        Drivetrain.turnFor(-25 * teamColor, degrees);
+        wait(100, msec);
+        Drivetrain.driveFor(11, inches);
+        wait(1000, msec);
+        Drivetrain.driveFor(-8, inches);
+        Drivetrain.turnToHeading(-80 * teamColor, degrees);
+        wait(100, msec);
+        Drivetrain.setTimeout(2500, msec);
+        Drivetrain.driveFor(45, inches);
+        Drivetrain.setDriveVelocity(30, percent);
+        Drivetrain.driveFor(15, inches);
+    } else if (autonomousRoute == 3) {
+        // Route 3: Positive side stake rush
+        printf("Route 3: Running positive side stake rush");
+
+        piston.set(false);
+        Drivetrain.driveFor(-40, inches);
+        piston.set(true);
+        wait(100, msec);
+        Drivetrain.driveFor(4, inches);
+        conveyor.spin(forward);
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.turnToHeading(-90 * teamColor, degrees);
+        intake.spin(forward);
+        wait(100, msec);
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.driveFor(20, inches);
+
+        // Let go of old goal
+        piston.set(false);
+        wait(500, msec);
+        Drivetrain.driveFor(5, inches);
+
+        intake.stop();
+        conveyor.stop();  // We let go of goal, make sure the ring doesn't drop
+
+        // Turn to grab new goal
+        Drivetrain.setTimeout(3000, msec);
+        Drivetrain.turnToHeading(0, degrees);
+        wait(100, msec);
+        // Now drive reverse to get goal
+        Drivetrain.driveFor(-14, inches);
+        Drivetrain.setDriveVelocity(40, percent);
+        Drivetrain.driveFor(-3, inches);
+
+        piston.set(true);
+        wait(100, msec);
+        // Continue spinning after grabbing new goal
+        intake.spin(forward);
+        conveyor.spin(forward);
+        Drivetrain.setDriveVelocity(80, percent);
+        Drivetrain.driveFor(30, inches);
+        Drivetrain.turnToHeading(-180 * teamColor, degrees);
+    } else {
+        // Default case if not in range
+        printf("No autonomous route found");
+    }
+}
+
+/**
  * Handles all user control of the robot during the driver control phase of a VEX Competition.
  *
  * @return None
@@ -579,7 +593,6 @@ void driverControl(void) {
 
     task teleopTask(teleopLoop);
     task stuckHelperTask(stuckHelperLoop);
-    task colorSortTask(colorSortLoop);
     task infoTask(infoLoop);
 }
 
