@@ -2,9 +2,6 @@
 
 ### Code for cool robots
 
-> [!IMPORTANT]  
-> ONLY COOL ROBOTS 😃
-
 ## V5 Robots
 
 ### Robot 1
