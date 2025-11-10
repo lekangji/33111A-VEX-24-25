@@ -1,6 +1,10 @@
-# Cool Robot Code
+# 2024-2025 High Stakes
 
-### Code for cool robots
+This repository contains the code for the VEX Robotics Competition team 33111A.
+
+## Overview
+
+High Stakes is the 2024-2025 VEX Robotics Competition game.
 
 ## V5 Robots
 
