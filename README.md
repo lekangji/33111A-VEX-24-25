@@ -53,3 +53,8 @@ High school robot
 #### Version 1
 
 Because this robot is no longer being maintained here, the code will no longer be updated.
+
+## Competition Results
+
+- Worlds qual
+- State competition finalist
