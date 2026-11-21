@@ -1,60 +1,32 @@
-# 2024-2025 High Stakes
+# 2024–2025 High Stakes
 
-This repository contains the code for the VEX Robotics Competition team 33111A.
+Team 33111A’s VEX V5 code for High Stakes, the 2024–2025 VEX Robotics Competition game.
 
-## Overview
+## Robot 1 · Middle school
 
-High Stakes is the 2024-2025 VEX Robotics Competition game.
+| Revision | Build | Programs |
+| --- | --- | --- |
+| V1 | Original sliding conveyor | [Teleop](robot-1/robot-v1/teleop/teleop.cpp) |
+| V2 | Hook-chain redesign based on the high school robot | [Teleop](robot-1/robot-v2/teleop/teleop.cpp) · [Skills auton](robot-1/robot-v2/auton/auton.cpp) |
+| V3 | Worlds update to the hook-chain robot | [Teleop](robot-1/robot-v3/teleop/teleop.cpp) |
 
-## V5 Robots
+Robot 1 V2’s teleop started as a copy of Robot 2 V1’s code after the October 5, 2024 redesign. That snapshot is `v1.1 Fix` in Robot 1’s history and `v4.1 Fix` in Robot 2’s.
 
-### Robot 1
+## Robot 2 · High school
 
-Middle school robot
-- V1 &rarr; First version of the robot. Sliding conveyor.
-- V2 &rarr; Second version. Hook chain.
+| Revision | Build | Programs |
+| --- | --- | --- |
+| V1 | First hook-chain robot | [Teleop](robot-2/robot-v1/teleop/teleop.cpp) |
+| V2 | Rebuild with general improvements | [Teleop](robot-2/robot-v2/teleop/teleop.cpp) · [Auton](robot-2/robot-v2/auton/auton.cpp) |
+| V3 | Third revision | [Teleop](robot-2/robot-v3/teleop/teleop.cpp) · [Auton](robot-2/robot-v3/auton/auton.cpp) |
 
-This folder contiains all the files needed for the functioning of the middle school robot.
+## Build a program
 
-#### Version 1
+Use one linked program as `main.cpp` in a VEXcode V5 C++ project. Each program has its own entry point. To build the separate [Robot 1 V2 drivetrain-controller beta](robot-1/robot-v2/auton/drivetrain-controller/auton.cpp), add its [controller source](robot-1/robot-v2/auton/drivetrain-controller/drivetrain_controller.cpp) and [header](robot-1/robot-v2/auton/drivetrain-controller/drivetrain_controller.h) to the same project.
 
-Original (not so good) version of the robot.
+The program links point to the latest snapshots on `main`. Open a file’s **History** to find earlier versions and their original dates.
 
-#### Version 2
+## Competition results
 
-New version of robot is now hook chain.
-
-##### Auton
-
-This auton is the skills auton that runs on this robot.
-
-###### Drivetrain Controller
-
-On newer versions of auton (v2.0+), this code will be required to be added in the same directory as the main.cpp file when building.
-These files provide an easy way to control the drivetrain.
-
-##### Teleop
-
-After a redesign of the robot (10/5/2024), changing it to the high school team's design, the code also had to be adapted (copied).
-The code in this folder will be similar if not the same as the robot-2/robot-v1 folder, starting from v4.1-fix.cpp --> 1.1-fix.cpp
-
-#### Version 3
-
-Not a new robot but for worlds.
-
-##### Auton stuff
-
-### Robot 2
-
-High school robot
-- V1 &rarr; First version of the robot. Hook chain robot.
-- V2 &rarr; Second version. Rebuild, general improvements.
-
-#### Version 1
-
-Because this robot is no longer being maintained here, the code will no longer be updated.
-
-## Competition Results
-
-- Worlds qual
+- Qualified for Worlds
 - State competition finalist
